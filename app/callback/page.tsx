@@ -1,17 +1,19 @@
 'use client';
 
-// OAuth callback — always render at request time (no prerender).
-// Avoids "useSearchParams must be wrapped in Suspense" build error.
-export const dynamic = 'force-dynamic';
-
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
-import { Shield, Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
+import { Shield, AlertCircle, CheckCircle2 } from 'lucide-react';
 
 type Status = 'verifying' | 'success' | 'error';
 
-export default function CallbackPage() {
+/**
+ * Inner component that actually reads search params.
+ * Must be wrapped in <Suspense> at the page level so Next.js doesn't
+ * try to prerender it statically (would fail with "useSearchParams
+ * should be wrapped in a suspense boundary").
+ */
+function CallbackInner() {
   const router       = useRouter();
   const searchParams = useSearchParams();
   const [status,  setStatus]  = useState<Status>('verifying');
@@ -112,5 +114,34 @@ export default function CallbackPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Suspense fallback shown while CallbackInner mounts.
+ * Matches the verifying state visually so there's no flicker.
+ */
+function CallbackFallback() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50 px-4">
+      <div className="w-full max-w-sm text-center">
+        <div className="inline-flex h-16 w-16 items-center justify-center rounded-2xl bg-blue-600 text-white mb-6 shadow-lg">
+          <Shield className="h-8 w-8" />
+        </div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-1">PSS Admin</h1>
+        <p className="text-sm text-gray-400 mb-8">EHB Platform Support Services</p>
+        <div className="rounded-2xl border border-gray-200 bg-white px-8 py-8 shadow-sm">
+          <p className="text-sm font-medium text-gray-600">Loading…</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function CallbackPage() {
+  return (
+    <Suspense fallback={<CallbackFallback />}>
+      <CallbackInner />
+    </Suspense>
   );
 }
