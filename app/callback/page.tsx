@@ -1,5 +1,9 @@
 'use client';
 
+// OAuth callback — always render at request time (no prerender).
+// Avoids "useSearchParams must be wrapped in Suspense" build error.
+export const dynamic = 'force-dynamic';
+
 import { useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { signIn } from 'next-auth/react';
