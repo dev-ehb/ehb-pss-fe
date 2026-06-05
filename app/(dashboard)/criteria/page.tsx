@@ -11,8 +11,9 @@ export default function CriteriaIndexPage() {
   const { data: platforms, isLoading } = useGetAllPlatformsQuery();
 
   useEffect(() => {
-    if (platforms && platforms.length > 0) {
-      router.replace(`/criteria/${platforms[0].platform_id}`);
+    const first = platforms?.[0];
+    if (first) {
+      router.replace(`/criteria/${first.platform_id}`);
     }
   }, [platforms, router]);
 
