@@ -111,7 +111,7 @@ function exportToCsv(logs: AuditLog[]) {
 
   const rows = logs.map((log) =>
     headers.map((h) => {
-      const val = (log as Record<string, unknown>)[h];
+      const val = (log as unknown as Record<string, unknown>)[h];
       const str = val == null ? '' : String(val);
       return str.includes(',') || str.includes('"') || str.includes('\n')
         ? `"${str.replace(/"/g, '""')}"`
