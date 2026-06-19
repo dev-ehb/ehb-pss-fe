@@ -1,4 +1,4 @@
-import { cn, getSqLevelColor, getSqLevelLabel } from '@/lib/utils';
+import { cn, getSqLevelColor, getSqLevelLabel, getSqLevelDisplay } from '@/lib/utils';
 import type { SqLevel } from '@/types/pss.types';
 
 interface SqBadgeProps {
@@ -9,7 +9,7 @@ interface SqBadgeProps {
 
 export function SqBadge({ level, className, size = 'md' }: SqBadgeProps) {
   const colorClass = getSqLevelColor(level);
-  const label = level !== null && level !== undefined ? `SQ${level}` : '—';
+  const label = getSqLevelDisplay(level);
 
   const sizeClass = {
     sm: 'px-1.5 py-0.5 text-xs',

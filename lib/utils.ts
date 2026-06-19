@@ -40,26 +40,53 @@ export function formatDateShort(dateStr: string | null | undefined): string {
 
 // ── SQ Level colors ───────────────────────────────────────────────────────────
 
+const SQ_LEVEL_COLORS: Record<number, string> = {
+  1: 'bg-gray-300 text-gray-800',
+  2: 'bg-orange-200 text-orange-900',
+  3: 'bg-amber-200 text-amber-900',
+  4: 'bg-slate-300 text-slate-800',
+  5: 'bg-yellow-400 text-yellow-900',
+  6: 'bg-cyan-200 text-cyan-900',
+  7: 'bg-blue-400 text-white',
+  8: 'bg-sky-500 text-white',
+  9: 'bg-gray-900 text-white',
+  10: 'bg-purple-600 text-white',
+};
+
 export function getSqLevelColor(level: SqLevel | number | null): string {
   if (level === null || level === undefined) return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
-  if (level <= 3) return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
-  if (level === 5) return 'bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300';
-  if (level === 7) return 'bg-purple-100 text-purple-700 dark:bg-purple-900/40 dark:text-purple-300';
-  if (level === 10) return 'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300';
-  return 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+  return SQ_LEVEL_COLORS[level] ?? 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300';
+}
+
+const SQ_LEVEL_NAMES: Record<number, string> = {
+  1: 'Iron',
+  2: 'Bronze',
+  3: 'Copper',
+  4: 'Silver',
+  5: 'Gold',
+  6: 'Platinum',
+  7: 'Titanium',
+  8: 'Diamond',
+  9: 'Obsidian',
+  10: 'Mythic',
+};
+
+/** Bare level name, e.g. 5 → 'Gold' */
+export function getSqLevelName(level: SqLevel | number | null): string {
+  if (level === null || level === undefined) return 'Unscored';
+  return SQ_LEVEL_NAMES[level] ?? `SQ${level}`;
+}
+
+/** Badge display string in "SQ{n} · {Name}" format, e.g. 5 → 'SQ5 · Gold' */
+export function getSqLevelDisplay(level: SqLevel | number | null): string {
+  if (level === null || level === undefined) return '—';
+  const name = SQ_LEVEL_NAMES[level];
+  return name ? `SQ${level} · ${name}` : `SQ${level}`;
 }
 
 export function getSqLevelLabel(level: SqLevel | number | null): string {
   if (level === null || level === undefined) return 'Unscored';
-  const labels: Record<number, string> = {
-    1: 'SQ1 — Basic',
-    2: 'SQ2 — Compliance',
-    3: 'SQ3 — Financial',
-    5: 'SQ5 — Verified',
-    7: 'SQ7 — Experienced',
-    10: 'SQ10 — Elite',
-  };
-  return labels[level] ?? `SQ${level}`;
+  return getSqLevelDisplay(level);
 }
 
 // ── SQ Status colors ──────────────────────────────────────────────────────────

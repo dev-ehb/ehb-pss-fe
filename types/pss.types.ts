@@ -1,6 +1,6 @@
 // ── SQ Level ──────────────────────────────────────────────────────────────────
 
-export const SQ_LEVELS = [1, 2, 3, 5, 7, 10] as const;
+export const SQ_LEVELS = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10] as const;
 export type SqLevel = typeof SQ_LEVELS[number];
 
 // ── SQ Status ─────────────────────────────────────────────────────────────────
@@ -43,6 +43,7 @@ export interface SqRequest {
   entity_data: Record<string, unknown>;
   status: SqStatus;
   sq_level_calculated: SqLevel | null;
+  sq_level_assigned: SqLevel | null;
   criteria_met: number;
   total_criteria: number;
   assigned_franchise_id: string | null;

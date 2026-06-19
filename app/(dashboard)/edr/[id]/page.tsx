@@ -30,7 +30,7 @@ import { SqBadge } from '@/components/sq/sq-badge';
 import { SqStatusPill } from '@/components/sq/sq-status-pill';
 import { AuditActionBadge } from '@/components/audit/audit-action-badge';
 import { toast } from '@/components/ui/toaster';
-import { formatDate, flattenObject } from '@/lib/utils';
+import { formatDate, flattenObject, getSqLevelDisplay } from '@/lib/utils';
 import type { SqLevel } from '@/types/pss.types';
 import { ArrowLeft, Edit3, RotateCcw, Loader2 } from 'lucide-react';
 
@@ -74,7 +74,7 @@ const overrideSchema = z.object({
 type DecisionForm = z.infer<typeof decisionSchema>;
 type OverrideForm = z.infer<typeof overrideSchema>;
 
-const SQ_LEVELS: SqLevel[] = [1, 2, 3, 5, 7, 10];
+const SQ_LEVELS: SqLevel[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
 // ── Page ──────────────────────────────────────────────────────────────────────
 
@@ -329,7 +329,7 @@ export default function EdrReviewPage() {
                         <SelectTrigger><SelectValue placeholder="Select SQ level" /></SelectTrigger>
                         <SelectContent>
                           {SQ_LEVELS.map((l) => (
-                            <SelectItem key={l} value={String(l)}>SQ{l}</SelectItem>
+                            <SelectItem key={l} value={String(l)}>{getSqLevelDisplay(l)}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>
@@ -407,7 +407,7 @@ export default function EdrReviewPage() {
                         <SelectTrigger><SelectValue placeholder="Select SQ level" /></SelectTrigger>
                         <SelectContent>
                           {SQ_LEVELS.map((l) => (
-                            <SelectItem key={l} value={String(l)}>SQ{l}</SelectItem>
+                            <SelectItem key={l} value={String(l)}>{getSqLevelDisplay(l)}</SelectItem>
                           ))}
                         </SelectContent>
                       </Select>

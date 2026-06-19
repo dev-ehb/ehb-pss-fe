@@ -57,10 +57,10 @@ const columns: ColumnDef<SqRequest, unknown>[] = [
     ),
   },
   {
-    accessorKey: 'sq_level_calculated',
-    header: 'SQ Score',
+    accessorKey: 'sq_level_assigned',
+    header: 'SQ Level',
     cell: ({ row }) => (
-      <SqBadge level={row.original.sq_level_calculated} />
+      <SqBadge level={row.original.sq_level_assigned ?? row.original.sq_level_calculated} />
     ),
   },
   {

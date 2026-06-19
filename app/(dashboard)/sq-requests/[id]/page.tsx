@@ -66,7 +66,7 @@ export default function SqRequestDetailPage() {
         </div>
         <div className="ml-auto flex items-center gap-2">
           <SqStatusPill status={request.status} />
-          <SqBadge level={request.sq_level_calculated} size="lg" />
+          <SqBadge level={request.sq_level_assigned ?? request.sq_level_calculated} size="lg" />
         </div>
       </div>
 
@@ -124,7 +124,7 @@ export default function SqRequestDetailPage() {
                   <span className="text-lg text-gray-400 dark:text-gray-500">/{request.total_criteria}</span>
                 </p>
               </div>
-              <SqBadge level={request.sq_level_calculated} size="lg" />
+              <SqBadge level={request.sq_level_assigned ?? request.sq_level_calculated} size="lg" />
             </div>
             <Progress value={criteriaPercent} className="h-3" />
             <p className="text-sm text-gray-500 dark:text-gray-400 text-center">{criteriaPercent}% criteria satisfied</p>
