@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -188,6 +188,38 @@ function RuleSlideOver({
 
   const operator = watch('operator');
   const action = watch('action');
+
+  // Re-populate the form whenever the slide-over opens or the target rule changes.
+  // useForm defaultValues are only applied on initial mount, so switching from
+  // "Add" to "Edit" (or editing a different rule) requires an explicit reset().
+  useEffect(() => {
+    if (!open) return;
+    reset(
+      rule
+        ? {
+            rule_name: rule.rule_name,
+            criteria_threshold: rule.criteria_threshold,
+            operator: rule.operator,
+            threshold_max: rule.threshold_max ?? undefined,
+            action: rule.action,
+            sq_level_assigned: rule.sq_level_assigned ?? undefined,
+            rejection_reason: rule.rejection_reason ?? '',
+            priority: rule.priority,
+            active: rule.active,
+          }
+        : {
+            rule_name: '',
+            criteria_threshold: 0,
+            operator: 'gte',
+            threshold_max: undefined,
+            action: 'franchise',
+            sq_level_assigned: undefined,
+            rejection_reason: '',
+            priority: 10,
+            active: true,
+          },
+    );
+  }, [open, rule, reset]);
 
   const handleClose = () => { reset(); onClose(); };
 

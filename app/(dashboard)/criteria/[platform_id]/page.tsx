@@ -6,7 +6,18 @@ import {
   useGetCriteriaByPlatformQuery,
   useCreateCriteriaSetMutation,
   useUpdateCriteriaSetMutation,
+  useDeleteCriteriaSetMutation,
 } from '@/lib/store/api/criteria.api';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
 import { useGetAllPlatformsQuery } from '@/lib/store/api/platforms.api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -179,7 +190,9 @@ function CriteriaSetCard({
   const [expanded, setExpanded] = useState(true);
   const [criteria, setCriteria] = useState<Criterion[]>(criteriaSet.criteria);
   const [dirty, setDirty] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const [updateCriteriaSet, { isLoading: saving }] = useUpdateCriteriaSetMutation();
+  const [deleteCriteriaSet, { isLoading: deleting }] = useDeleteCriteriaSetMutation();
 
   // Sync if server data changes
   useEffect(() => {
@@ -219,7 +232,7 @@ function CriteriaSetCard({
   const handleSave = async () => {
     try {
       await updateCriteriaSet({
-        criteria_set_id: criteriaSet._id,
+        criteria_set_id: criteriaSet.id,
         platform_id: platformId,
         body: { criteria },
       }).unwrap();
@@ -230,7 +243,22 @@ function CriteriaSetCard({
     }
   };
 
+  const handleDelete = async () => {
+    try {
+      await deleteCriteriaSet({
+        criteria_set_id: criteriaSet.id,
+        platform_id: platformId,
+      }).unwrap();
+      toast({ title: `"${criteriaSet.entity_type}" criteria set deleted` });
+    } catch {
+      toast({ title: 'Delete failed', variant: 'destructive' });
+    } finally {
+      setConfirmDelete(false);
+    }
+  };
+
   return (
+    <>
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-3">
@@ -259,6 +287,15 @@ function CriteriaSetCard({
               {saving ? 'Saving…' : 'Save'}
             </Button>
           )}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="h-7 w-7 p-0 text-red-400 hover:text-red-600"
+            title="Delete this criteria set"
+            onClick={() => setConfirmDelete(true)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
           <Button
             variant="ghost"
             size="sm"
@@ -320,6 +357,30 @@ function CriteriaSetCard({
         </CardContent>
       )}
     </Card>
+
+    <AlertDialog open={confirmDelete} onOpenChange={(o) => !o && setConfirmDelete(false)}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Delete Criteria Set</AlertDialogTitle>
+          <AlertDialogDescription>
+            Are you sure you want to delete the &quot;{criteriaSet.entity_type}&quot; criteria
+            set? This is a soft-delete — the set will be deactivated and hidden from the SQ
+            engine. You can re-create it at any time.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogAction
+            className="bg-red-600 hover:bg-red-700"
+            onClick={handleDelete}
+            disabled={deleting}
+          >
+            {deleting ? 'Deleting…' : 'Delete Set'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
@@ -498,7 +559,7 @@ export default function CriteriaPage() {
         <div className="space-y-4">
           {filtered.map((cs) => (
             <CriteriaSetCard
-              key={cs._id}
+              key={cs.id}
               criteriaSet={cs}
               platformId={selectedPlatform}
             />

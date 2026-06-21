@@ -54,6 +54,19 @@ export const criteriaApi = baseApi.injectEndpoints({
         { type: 'CriteriaSet', id: platform_id },
       ],
     }),
+
+    deleteCriteriaSet: build.mutation<
+      void,
+      { criteria_set_id: string; platform_id: string }
+    >({
+      query: ({ criteria_set_id }) => ({
+        url: `/criteria/${criteria_set_id}`,
+        method: 'DELETE',
+      }),
+      invalidatesTags: (_result, _error, { platform_id }) => [
+        { type: 'CriteriaSet', id: platform_id },
+      ],
+    }),
   }),
 });
 
@@ -61,4 +74,5 @@ export const {
   useGetCriteriaByPlatformQuery,
   useCreateCriteriaSetMutation,
   useUpdateCriteriaSetMutation,
+  useDeleteCriteriaSetMutation,
 } = criteriaApi;

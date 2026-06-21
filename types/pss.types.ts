@@ -153,7 +153,8 @@ export interface Criterion {
 }
 
 export interface CriteriaSet {
-  _id: string;
+  id: string;       // Prisma/PostgreSQL field name
+  _id?: string;     // kept for backward-compat (unused — backend returns 'id')
   platform_id: string;
   entity_type: string;
   criteria: Criterion[];
