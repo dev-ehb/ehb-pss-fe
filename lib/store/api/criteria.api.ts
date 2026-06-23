@@ -9,6 +9,7 @@ interface GetCriteriaParams {
 interface CreateCriteriaSetBody {
   platform_id: string;
   entity_type: string;
+  entity_subtype?: string;
   criteria: Omit<Criterion, 'id'>[];
 }
 

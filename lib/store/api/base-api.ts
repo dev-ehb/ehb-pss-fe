@@ -31,6 +31,9 @@ export const baseApi = createApi({
     'AuditLog',
     'WebhookDelivery',
     'Stats',
+    'VerificationApp',
+    'VerificationRequest',
+    'UserVerification',
   ],
   endpoints: () => ({}),
 });

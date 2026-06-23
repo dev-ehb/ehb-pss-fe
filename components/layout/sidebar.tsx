@@ -10,6 +10,7 @@ import {
   Building2,
   Settings2,
   ClipboardList,
+  ShieldCheck,
   Globe,
   ScrollText,
   LogOut,
@@ -32,6 +33,7 @@ const NAV_ITEMS: NavItem[] = [
   { label: 'Franchises',   href: '/franchise',    icon: Building2 },
   { label: 'Rule Engine',  href: '/rule-engine',  icon: Settings2 },
   { label: 'Criteria',     href: '/criteria',     icon: ClipboardList },
+  { label: 'Verification', href: '/verification-apps', icon: ShieldCheck },
   { label: 'Platforms',    href: '/platforms',    icon: Globe },
   { label: 'Audit Logs',   href: '/audit',        icon: ScrollText },
 ];

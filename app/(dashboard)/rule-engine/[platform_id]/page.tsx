@@ -65,6 +65,8 @@ import {
 
 const ruleSchema = z
   .object({
+    entity_type: z.string().optional().nullable(),
+    entity_subtype: z.string().optional().nullable(),
     rule_name: z.string().min(2, 'Rule name required'),
     criteria_threshold: z.coerce.number().min(0, 'Must be ≥ 0'),
     operator: z.enum(['gte', 'lte', 'eq', 'between']),
@@ -166,6 +168,8 @@ function RuleSlideOver({
     resolver: zodResolver(ruleSchema),
     defaultValues: rule
       ? {
+          entity_type: rule.entity_type ?? '',
+          entity_subtype: rule.entity_subtype ?? '',
           rule_name: rule.rule_name,
           criteria_threshold: rule.criteria_threshold,
           operator: rule.operator,
@@ -177,6 +181,8 @@ function RuleSlideOver({
           active: rule.active,
         }
       : {
+          entity_type: '',
+          entity_subtype: '',
           rule_name: '',
           criteria_threshold: 0,
           operator: 'gte',
@@ -197,6 +203,8 @@ function RuleSlideOver({
     reset(
       rule
         ? {
+            entity_type: rule.entity_type ?? '',
+            entity_subtype: rule.entity_subtype ?? '',
             rule_name: rule.rule_name,
             criteria_threshold: rule.criteria_threshold,
             operator: rule.operator,
@@ -208,6 +216,8 @@ function RuleSlideOver({
             active: rule.active,
           }
         : {
+            entity_type: '',
+            entity_subtype: '',
             rule_name: '',
             criteria_threshold: 0,
             operator: 'gte',
@@ -224,16 +234,22 @@ function RuleSlideOver({
   const handleClose = () => { reset(); onClose(); };
 
   const onSubmit = async (values: RuleFormValues) => {
+    const scoped = {
+      ...values,
+      entity_type: values.entity_type?.trim() ? values.entity_type.trim() : null,
+      entity_subtype: values.entity_subtype?.trim() ? values.entity_subtype.trim() : null,
+      sq_level_assigned: (values.sq_level_assigned ?? null) as SqLevel | null,
+    };
     try {
       if (isEditing && rule) {
         await updateRule({
           rule_id: rule._id,
           platform_id: platformId,
-          body: values,
+          body: scoped,
         }).unwrap();
         toast({ title: 'Rule updated' });
       } else {
-        await createRule({ ...values, platform_id: platformId }).unwrap();
+        await createRule({ ...scoped, platform_id: platformId }).unwrap();
         toast({ title: 'Rule created' });
       }
       handleClose();
@@ -265,6 +281,28 @@ function RuleSlideOver({
             {errors.rule_name && (
               <p className="text-xs text-red-500">{errors.rule_name.message}</p>
             )}
+          </div>
+
+          {/* Scope: blank = applies to any entity_type / subtype */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label htmlFor="entity_type">Entity Type <span className="text-gray-400 font-normal">(blank = any)</span></Label>
+              <input
+                id="entity_type"
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                placeholder="e.g. jps_profile"
+                {...register('entity_type')}
+              />
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="entity_subtype">Subtype <span className="text-gray-400 font-normal">(blank = any)</span></Label>
+              <input
+                id="entity_subtype"
+                className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+                placeholder="e.g. doctor"
+                {...register('entity_subtype')}
+              />
+            </div>
           </div>
 
           {/* Criteria threshold + operator */}
@@ -460,6 +498,11 @@ function RuleCard({
         <div className="flex items-center gap-2 mb-2">
           <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">{rule.rule_name}</span>
           <ActionBadge action={rule.action} />
+          {rule.entity_type && (
+            <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+              {rule.entity_type}{rule.entity_subtype ? ` / ${rule.entity_subtype}` : ''}
+            </span>
+          )}
           {!rule.active && (
             <span className="text-xs text-gray-400 dark:text-gray-500 italic">disabled</span>
           )}

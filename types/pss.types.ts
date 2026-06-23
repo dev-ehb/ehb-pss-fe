@@ -140,7 +140,7 @@ export interface EdrFullDetail {
 
 // ── Criteria ──────────────────────────────────────────────────────────────────
 
-export type CheckType = 'presence' | 'min_length' | 'min_value' | 'regex';
+export type CheckType = 'presence' | 'min_length' | 'min_value' | 'regex' | 'verification_app';
 
 export interface Criterion {
   id: string;
@@ -150,6 +150,7 @@ export interface Criterion {
   sq_min: SqLevel;
   check_type: CheckType;
   check_value: string | number | null;
+  verification_app_id?: string;
 }
 
 export interface CriteriaSet {
@@ -157,6 +158,7 @@ export interface CriteriaSet {
   _id?: string;     // kept for backward-compat (unused — backend returns 'id')
   platform_id: string;
   entity_type: string;
+  entity_subtype: string;
   criteria: Criterion[];
   active: boolean;
   created_at: string;
@@ -171,6 +173,8 @@ export type RuleAction = 'auto_approve' | 'franchise' | 'edr' | 'reject';
 export interface PlatformRule {
   _id: string;
   platform_id: string;
+  entity_type: string | null;
+  entity_subtype: string | null;
   rule_name: string;
   criteria_threshold: number;
   operator: RuleOperator;
@@ -267,4 +271,57 @@ export interface DashboardStats {
   pending_edr_reviews: number;
   pending_franchise_reviews: number;
   total_platforms: number;
+}
+
+
+// ── Verification Apps ─────────────────────────────────────────────────────────
+
+export interface VerificationApp {
+  id: string;
+  app_id: string;
+  name: string;
+  description: string | null;
+  category: string;
+  engine: string;
+  config: Record<string, unknown>;
+  capture_spec: Record<string, unknown>;
+  validity_days: number | null;
+  reusable: boolean;
+  active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface UserVerification {
+  id: string;
+  user_id: string;
+  app_id: string;
+  status: string;
+  proof_ref: string | null;
+  match_score: number | null;
+  engine: string | null;
+  reviewed_by: string | null;
+  result_meta: Record<string, unknown> | null;
+  verified_at: string | null;
+  expires_at: string | null;
+  last_request_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface VerificationRequest {
+  id: string;
+  user_id: string;
+  app_id: string;
+  platform_id: string;
+  origin_entity: string | null;
+  status: string;
+  proof_ref: string | null;
+  cnic_ref: string | null;
+  match_score: number | null;
+  engine: string;
+  decision_by: string | null;
+  notes: string | null;
+  created_at: string;
+  decided_at: string | null;
 }

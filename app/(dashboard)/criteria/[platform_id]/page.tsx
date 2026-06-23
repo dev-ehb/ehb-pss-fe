@@ -47,6 +47,7 @@ const CHECK_TYPES: { value: CheckType; label: string }[] = [
   { value: 'min_length', label: 'Minimum string length' },
   { value: 'min_value', label: 'Minimum numeric value' },
   { value: 'regex', label: 'Regex match' },
+  { value: 'verification_app', label: 'Verification App (active proof)' },
 ];
 
 // ── Criterion row ─────────────────────────────────────────────────────────────
@@ -62,7 +63,8 @@ function CriterionRow({
   onChange: (updated: Criterion) => void;
   onRemove: () => void;
 }) {
-  const needsValue = criterion.check_type !== 'presence';
+  const isVerificationApp = criterion.check_type === 'verification_app';
+  const needsValue = criterion.check_type !== 'presence' && !isVerificationApp;
 
   return (
     <div className="grid grid-cols-12 gap-2 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3 items-start">
@@ -84,12 +86,16 @@ function CriterionRow({
 
       {/* Field key */}
       <div className="col-span-2 space-y-1">
-        <Label className="text-xs">Field Key</Label>
+        <Label className="text-xs">{isVerificationApp ? 'App ID' : 'Field Key'}</Label>
         <input
           className="w-full rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs font-mono focus:border-blue-500 focus:outline-none"
-          placeholder="entity_data.email"
-          value={criterion.field_key}
-          onChange={(e) => onChange({ ...criterion, field_key: e.target.value })}
+          placeholder={isVerificationApp ? 'facial' : 'entity_data.email'}
+          value={isVerificationApp ? (criterion.verification_app_id ?? '') : criterion.field_key}
+          onChange={(e) =>
+            isVerificationApp
+              ? onChange({ ...criterion, verification_app_id: e.target.value })
+              : onChange({ ...criterion, field_key: e.target.value })
+          }
         />
       </div>
 
@@ -263,6 +269,9 @@ function CriteriaSetCard({
       <CardHeader className="flex flex-row items-center justify-between pb-2">
         <div className="flex items-center gap-3">
           <CardTitle className="text-base">{criteriaSet.entity_type}</CardTitle>
+          <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+            {criteriaSet.entity_subtype === '*' ? 'base' : criteriaSet.entity_subtype}
+          </span>
           <span
             className={cn(
               'rounded-full px-2 py-0.5 text-xs font-medium',
@@ -396,6 +405,7 @@ function NewCriteriaSetForm({
   onClose: () => void;
 }) {
   const [entityType, setEntityType] = useState('');
+  const [entitySubtype, setEntitySubtype] = useState('*');
   const [createCriteriaSet, { isLoading }] = useCreateCriteriaSetMutation();
 
   const handleCreate = async () => {
@@ -404,6 +414,7 @@ function NewCriteriaSetForm({
       await createCriteriaSet({
         platform_id: platformId,
         entity_type: entityType.trim(),
+        entity_subtype: entitySubtype.trim() || '*',
         criteria: [],
       }).unwrap();
       toast({ title: 'Criteria set created' });
@@ -427,6 +438,19 @@ function NewCriteriaSetForm({
               placeholder="e.g. rider, driver, restaurant"
               value={entityType}
               onChange={(e) => setEntityType(e.target.value)}
+              onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
+            />
+          </div>
+          <div className="flex-1 space-y-1">
+            <Label htmlFor="new-entity-subtype" className="text-sm font-medium">
+              Subtype <span className="text-gray-400 font-normal">(&quot;*&quot; = base)</span>
+            </Label>
+            <input
+              id="new-entity-subtype"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              placeholder="* (base) or e.g. wholesale, doctor"
+              value={entitySubtype}
+              onChange={(e) => setEntitySubtype(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             />
           </div>

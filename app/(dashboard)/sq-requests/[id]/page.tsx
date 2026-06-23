@@ -158,14 +158,40 @@ export default function SqRequestDetailPage() {
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-2 gap-2">
-              {entityFields.map(({ key, value }) => (
-                <div key={key} className="flex flex-col rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
-                  <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
-                    {key}
-                  </span>
-                  <span className="text-sm text-gray-900 dark:text-gray-100 mt-0.5 break-all">{value}</span>
-                </div>
-              ))}
+              {entityFields.map(({ key, value }) => {
+                const isImage =
+                  /^data:image\//.test(value) ||
+                  (/^https?:\/\/\S+$/.test(value) &&
+                    /(cnic|facial|selfie|photo|proof|avatar|image)/i.test(key));
+                if (isImage) {
+                  return (
+                    <div
+                      key={key}
+                      className="col-span-2 flex flex-col rounded-lg bg-gray-50 dark:bg-gray-800 p-3"
+                    >
+                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                        {key}
+                      </span>
+                      <a href={value} target="_blank" rel="noreferrer" className="mt-2 block">
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={value}
+                          alt={key}
+                          className="max-h-64 w-auto rounded-md border border-gray-200 dark:border-gray-700 object-contain bg-white"
+                        />
+                      </a>
+                    </div>
+                  );
+                }
+                return (
+                  <div key={key} className="flex flex-col rounded-lg bg-gray-50 dark:bg-gray-800 p-3">
+                    <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wide">
+                      {key}
+                    </span>
+                    <span className="text-sm text-gray-900 dark:text-gray-100 mt-0.5 break-all">{value}</span>
+                  </div>
+                );
+              })}
             </div>
           </CardContent>
         </Card>

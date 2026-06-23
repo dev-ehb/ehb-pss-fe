@@ -3,6 +3,8 @@ import type { PlatformRule, RuleOperator, RuleAction, SqLevel } from '@/types/ps
 
 interface CreateRuleBody {
   platform_id: string;
+  entity_type?: string | null;
+  entity_subtype?: string | null;
   rule_name: string;
   criteria_threshold: number;
   operator: RuleOperator;
