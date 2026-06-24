@@ -171,7 +171,7 @@ export type RuleOperator = 'gte' | 'lte' | 'eq' | 'between';
 export type RuleAction = 'auto_approve' | 'franchise' | 'edr' | 'reject';
 
 export interface PlatformRule {
-  _id: string;
+  id: string;
   platform_id: string;
   entity_type: string | null;
   entity_subtype: string | null;

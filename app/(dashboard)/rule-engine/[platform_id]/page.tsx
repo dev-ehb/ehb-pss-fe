@@ -243,7 +243,7 @@ function RuleSlideOver({
     try {
       if (isEditing && rule) {
         await updateRule({
-          rule_id: rule._id,
+          rule_id: rule.id,
           platform_id: platformId,
           body: scoped,
         }).unwrap();
@@ -533,7 +533,7 @@ function RuleCard({
           size="sm"
           className="h-7 w-7 p-0"
           title={rule.active ? 'Disable rule' : 'Enable rule'}
-          onClick={() => toggle({ rule_id: rule._id, platform_id: platformId })}
+          onClick={() => toggle({ rule_id: rule.id, platform_id: platformId })}
         >
           {rule.active ? (
             <Power className="h-3.5 w-3.5 text-green-600" />
@@ -593,7 +593,7 @@ export default function RuleEnginePage() {
   const handleDelete = async () => {
     if (!deletingRule) return;
     try {
-      await deleteRule({ rule_id: deletingRule._id, platform_id: selectedPlatform }).unwrap();
+      await deleteRule({ rule_id: deletingRule.id, platform_id: selectedPlatform }).unwrap();
       toast({ title: 'Rule deleted' });
     } catch {
       toast({ title: 'Delete failed', variant: 'destructive' });
@@ -671,7 +671,7 @@ export default function RuleEnginePage() {
           <CardContent className="space-y-3">
             {sortedRules.map((rule) => (
               <RuleCard
-                key={rule._id}
+                key={rule.id}
                 rule={rule}
                 platformId={selectedPlatform}
                 onEdit={() => openEdit(rule)}
