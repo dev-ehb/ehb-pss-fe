@@ -10,6 +10,7 @@ import { SqBadge } from '@/components/sq/sq-badge';
 import { SqStatusPill } from '@/components/sq/sq-status-pill';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ErrorState } from '@/components/ui/error-state';
 import {
   Select,
   SelectContent,
@@ -110,7 +111,7 @@ export default function SqRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [platformFilter, setPlatformFilter] = useState<string>('all');
 
-  const { data, isLoading, isFetching } = useGetPendingRequestsQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useGetPendingRequestsQuery({
     status: statusFilter === 'all' ? undefined : statusFilter,
     platform_id: platformFilter === 'all' ? undefined : platformFilter,
     page: pagination.pageIndex + 1,
@@ -164,18 +165,22 @@ export default function SqRequestsPage() {
       </div>
 
       {/* Table */}
-      <DataTable
-        data={data?.data ?? []}
-        columns={columns}
-        isLoading={isLoading || isFetching}
-        totalRows={data?.total}
-        pagination={pagination}
-        onPaginationChange={setPagination}
-        manualPagination
-        enableGlobalFilter={false}
-        emptyMessage="No SQ requests found."
-        onRowClick={(row) => router.push(`/sq-requests/${row.sq_request_id}`)}
-      />
+      {isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : (
+        <DataTable
+          data={data?.data ?? []}
+          columns={columns}
+          isLoading={isLoading || isFetching}
+          totalRows={data?.total}
+          pagination={pagination}
+          onPaginationChange={setPagination}
+          manualPagination
+          enableGlobalFilter={false}
+          emptyMessage="No SQ requests found."
+          onRowClick={(row) => router.push(`/sq-requests/${row.sq_request_id}`)}
+        />
+      )}
     </div>
   );
 }

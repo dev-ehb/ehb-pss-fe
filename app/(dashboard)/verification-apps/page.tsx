@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 import { ShieldCheck, Plus, Power, PowerOff, ClipboardCheck } from 'lucide-react';
@@ -77,7 +78,7 @@ function NewAppForm({ onClose }: { onClose: () => void }) {
             <Button size="sm" onClick={handleCreate} disabled={!appId.trim() || !name.trim() || isLoading}>
               {isLoading ? 'Creating…' : 'Create'}
             </Button>
-            <Button size="sm" variant="outline" onClick={onClose}>Cancel</Button>
+            <Button size="sm" variant="outline" onClick={onClose} disabled={isLoading}>Cancel</Button>
           </div>
         </div>
         <p className="mt-2 text-xs text-gray-400">Engine defaults to <span className="font-mono">manual_review</span> (a PSS admin approves each submission).</p>
@@ -87,7 +88,7 @@ function NewAppForm({ onClose }: { onClose: () => void }) {
 }
 
 export default function VerificationAppsPage() {
-  const { data: apps, isLoading } = useGetVerificationAppsQuery();
+  const { data: apps, isLoading, isError, refetch } = useGetVerificationAppsQuery();
   const [updateApp] = useUpdateVerificationAppMutation();
   const [addingNew, setAddingNew] = useState(false);
 
@@ -118,7 +119,9 @@ export default function VerificationAppsPage() {
 
       {addingNew && <NewAppForm onClose={() => setAddingNew(false)} />}
 
-      {isLoading ? (
+      {isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : isLoading ? (
         <div className="space-y-3">
           {Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-20 w-full rounded-xl" />)}
         </div>

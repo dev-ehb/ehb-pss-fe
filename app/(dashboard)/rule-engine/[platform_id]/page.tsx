@@ -243,7 +243,7 @@ function RuleSlideOver({
     try {
       if (isEditing && rule) {
         await updateRule({
-          rule_id: rule._id,
+          rule_id: rule.id,
           platform_id: platformId,
           body: scoped,
         }).unwrap();
@@ -448,7 +448,7 @@ function RuleSlideOver({
 
           {/* Footer */}
           <div className="flex justify-end gap-2 pt-2">
-            <Button type="button" variant="outline" onClick={handleClose}>
+            <Button type="button" variant="outline" onClick={handleClose} disabled={creating || updating}>
               Cancel
             </Button>
             <Button type="submit" disabled={creating || updating}>
@@ -533,7 +533,13 @@ function RuleCard({
           size="sm"
           className="h-7 w-7 p-0"
           title={rule.active ? 'Disable rule' : 'Enable rule'}
-          onClick={() => toggle({ rule_id: rule._id, platform_id: platformId })}
+          onClick={async () => {
+            try {
+              await toggle({ rule_id: rule.id, platform_id: platformId }).unwrap();
+            } catch {
+              toast({ title: 'Failed to toggle rule', variant: 'destructive' });
+            }
+          }}
         >
           {rule.active ? (
             <Power className="h-3.5 w-3.5 text-green-600" />
@@ -575,7 +581,12 @@ export default function RuleEnginePage() {
   const [deletingRule, setDeletingRule] = useState<PlatformRule | null>(null);
 
   const { data: platforms } = useGetAllPlatformsQuery();
-  const { data: rules, isLoading } = useGetRulesByPlatformQuery(selectedPlatform, {
+  const {
+    data: rules,
+    isLoading,
+    isError,
+    refetch,
+  } = useGetRulesByPlatformQuery(selectedPlatform, {
     skip: !selectedPlatform,
   });
   const [deleteRule, { isLoading: deleting }] = useDeleteRuleMutation();
@@ -593,7 +604,7 @@ export default function RuleEnginePage() {
   const handleDelete = async () => {
     if (!deletingRule) return;
     try {
-      await deleteRule({ rule_id: deletingRule._id, platform_id: selectedPlatform }).unwrap();
+      await deleteRule({ rule_id: deletingRule.id, platform_id: selectedPlatform }).unwrap();
       toast({ title: 'Rule deleted' });
     } catch {
       toast({ title: 'Delete failed', variant: 'destructive' });
@@ -649,6 +660,17 @@ export default function RuleEnginePage() {
             <Skeleton key={i} className="h-20 w-full rounded-xl" />
           ))}
         </div>
+      ) : isError ? (
+        <div className="rounded-xl border border-dashed border-red-300 dark:border-red-800 bg-red-50 dark:bg-red-900/20 py-20 text-center">
+          <Zap className="mx-auto h-10 w-10 text-red-300 dark:text-red-700 mb-3" />
+          <p className="text-red-600 dark:text-red-400 font-medium">Failed to load rules</p>
+          <p className="text-sm text-red-400 dark:text-red-500 mt-1">
+            Something went wrong while fetching this platform&apos;s rules.
+          </p>
+          <Button variant="outline" className="mt-4" onClick={() => refetch()}>
+            Retry
+          </Button>
+        </div>
       ) : sortedRules.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 py-20 text-center">
           <Zap className="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />
@@ -671,7 +693,7 @@ export default function RuleEnginePage() {
           <CardContent className="space-y-3">
             {sortedRules.map((rule) => (
               <RuleCard
-                key={rule._id}
+                key={rule.id}
                 rule={rule}
                 platformId={selectedPlatform}
                 onEdit={() => openEdit(rule)}
@@ -701,7 +723,7 @@ export default function RuleEnginePage() {
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
             <AlertDialogAction
               className="bg-red-600 hover:bg-red-700"
               onClick={handleDelete}

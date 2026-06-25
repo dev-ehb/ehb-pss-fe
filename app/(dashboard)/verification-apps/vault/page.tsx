@@ -8,6 +8,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { ErrorState } from '@/components/ui/error-state';
 import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 import { Vault as VaultIcon, Search, Ban } from 'lucide-react';
@@ -22,7 +23,7 @@ const STATUS_STYLES: Record<string, string> = {
 export default function VaultPage() {
   const [input, setInput] = useState('');
   const [userId, setUserId] = useState('');
-  const { data: vault, isFetching } = useGetUserVaultQuery(userId, { skip: !userId });
+  const { data: vault, isFetching, isError, refetch } = useGetUserVaultQuery(userId, { skip: !userId });
   const [revoke] = useRevokeVaultMutation();
 
   const onRevoke = async (appId: string) => {
@@ -60,7 +61,9 @@ export default function VaultPage() {
       </Card>
 
       {userId && (
-        isFetching ? (
+        isError ? (
+          <ErrorState onRetry={refetch} />
+        ) : isFetching ? (
           <p className="text-sm text-gray-400 px-1">Loading…</p>
         ) : !vault || vault.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 py-16 text-center">

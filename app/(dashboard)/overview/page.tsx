@@ -7,17 +7,11 @@ import { useGetAllPlatformsQuery } from '@/lib/store/api/platforms.api';
 import { useSearchLogsQuery } from '@/lib/store/api/audit.api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 import { AuditActionBadge } from '@/components/audit/audit-action-badge';
 import { SqStatusPill } from '@/components/sq/sq-status-pill';
 import { formatDate } from '@/lib/utils';
-import {
-  FileSearch,
-  Shield,
-  Building2,
-  Globe,
-  TrendingUp,
-  Clock,
-} from 'lucide-react';
+import { FileSearch, Shield, Building2, Globe, TrendingUp, Clock, RefreshCw } from 'lucide-react';
 import Link from 'next/link';
 
 function StatCard({
@@ -27,6 +21,8 @@ function StatCard({
   href,
   color,
   isLoading,
+  isError,
+  onRetry,
 }: {
   title: string;
   value: number | string;
@@ -34,66 +30,92 @@ function StatCard({
   href: string;
   color: string;
   isLoading?: boolean;
+  isError?: boolean;
+  onRetry?: () => void;
 }) {
-  return (
-    <Link href={href}>
-      <Card className="hover:shadow-md transition-shadow cursor-pointer">
-        <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-              {isLoading ? (
-                <Skeleton className="h-8 w-16 mt-1" />
-              ) : (
-                <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">{value}</p>
-              )}
-            </div>
-            <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${color}`}>
-              <Icon className="h-6 w-6 text-white" />
-            </div>
+  const body = (
+    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+      <CardContent className="p-6">
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
+            {isError ? (
+              <button
+                onClick={(e) => {
+                  e.preventDefault();
+                  onRetry?.();
+                }}
+                className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+              >
+                <RefreshCw className="h-3.5 w-3.5" /> Retry
+              </button>
+            ) : isLoading ? (
+              <Skeleton className="h-8 w-16 mt-1" />
+            ) : (
+              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">{value}</p>
+            )}
           </div>
-        </CardContent>
-      </Card>
-    </Link>
+          <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${color}`}>
+            <Icon className="h-6 w-6 text-white" />
+          </div>
+        </div>
+      </CardContent>
+    </Card>
   );
+
+  // On error the card is not a navigation link — only Retry is interactive.
+  if (isError) return body;
+  return <Link href={href}>{body}</Link>;
 }
 
 export default function OverviewPage() {
-  const { data: sqData, isLoading: sqLoading } = useGetPendingRequestsQuery({
-    status: 'pending',
-    page: 1,
-    limit: 1,
-  });
+  const {
+    data: sqData,
+    isLoading: sqLoading,
+    isError: sqErr,
+    refetch: sqRefetch,
+  } = useGetPendingRequestsQuery({ status: 'pending', page: 1, limit: 1 });
 
-  const { data: edrData, isLoading: edrLoading } = useGetEdrQueueQuery({
-    status: 'pending',
-    page: 1,
-    limit: 1,
-  });
+  const {
+    data: edrData,
+    isLoading: edrLoading,
+    isError: edrErr,
+    refetch: edrRefetch,
+  } = useGetEdrQueueQuery({ status: 'pending', page: 1, limit: 1 });
 
-  const { data: franchiseData, isLoading: franchiseLoading } = useGetAllFranchisesQuery({
-    page: 1,
-    limit: 1,
-  });
+  const {
+    data: franchiseData,
+    isLoading: franchiseLoading,
+    isError: franchiseErr,
+    refetch: franchiseRefetch,
+  } = useGetAllFranchisesQuery({ page: 1, limit: 1 });
 
-  const { data: platforms, isLoading: platformsLoading } = useGetAllPlatformsQuery();
+  const {
+    data: platforms,
+    isLoading: platformsLoading,
+    isError: platformsErr,
+    refetch: platformsRefetch,
+  } = useGetAllPlatformsQuery();
 
-  const { data: auditData, isLoading: auditLoading } = useSearchLogsQuery({
-    page: 1,
-    limit: 10,
-  });
+  const {
+    data: auditData,
+    isLoading: auditLoading,
+    isError: auditErr,
+    refetch: auditRefetch,
+  } = useSearchLogsQuery({ page: 1, limit: 10 });
 
   // Sum pending franchise reviews across all franchises
-  const franchiseData2 = useGetAllFranchisesQuery({ page: 1, limit: 50 });
+  const {
+    data: franchiseListData,
+    isError: franchiseListErr,
+    refetch: franchiseListRefetch,
+  } = useGetAllFranchisesQuery({ page: 1, limit: 50 });
   const pendingFranchiseReviews =
-    franchiseData2.data?.data?.reduce(
-      (sum, f) => sum + (f.pending_review_count ?? 0),
-      0,
-    ) ?? 0;
+    franchiseListData?.data?.reduce((sum, f) => sum + (f.pending_review_count ?? 0), 0) ?? 0;
 
   return (
     <div className="space-y-6">
-      {/* Stats grid */}
+      {/* Stats grid — each card handles its own error independently */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="Pending SQ Requests"
@@ -102,6 +124,8 @@ export default function OverviewPage() {
           href="/sq-requests"
           color="bg-blue-600"
           isLoading={sqLoading}
+          isError={sqErr}
+          onRetry={sqRefetch}
         />
         <StatCard
           title="Pending EDR Reviews"
@@ -110,6 +134,8 @@ export default function OverviewPage() {
           href="/edr"
           color="bg-red-500"
           isLoading={edrLoading}
+          isError={edrErr}
+          onRetry={edrRefetch}
         />
         <StatCard
           title="Pending Franchise Reviews"
@@ -118,6 +144,11 @@ export default function OverviewPage() {
           href="/franchise"
           color="bg-orange-500"
           isLoading={franchiseLoading}
+          isError={franchiseErr || franchiseListErr}
+          onRetry={() => {
+            franchiseRefetch();
+            franchiseListRefetch();
+          }}
         />
         <StatCard
           title="Registered Platforms"
@@ -126,6 +157,8 @@ export default function OverviewPage() {
           href="/platforms"
           color="bg-green-600"
           isLoading={platformsLoading}
+          isError={platformsErr}
+          onRetry={platformsRefetch}
         />
       </div>
 
@@ -144,7 +177,9 @@ export default function OverviewPage() {
               </Link>
             </CardHeader>
             <CardContent>
-              {auditLoading ? (
+              {auditErr ? (
+                <ErrorState onRetry={auditRefetch} className="border-0 py-8" />
+              ) : auditLoading ? (
                 <div className="space-y-3">
                   {Array.from({ length: 5 }).map((_, i) => (
                     <Skeleton key={i} className="h-10 w-full" />
@@ -186,7 +221,9 @@ export default function OverviewPage() {
               </CardTitle>
             </CardHeader>
             <CardContent>
-              {platformsLoading ? (
+              {platformsErr ? (
+                <ErrorState onRetry={platformsRefetch} className="border-0 py-8" />
+              ) : platformsLoading ? (
                 <div className="space-y-2">
                   {Array.from({ length: 3 }).map((_, i) => (
                     <Skeleton key={i} className="h-8 w-full" />
@@ -229,7 +266,9 @@ export default function OverviewPage() {
               <CardTitle className="text-base font-semibold">Recent SQ Requests</CardTitle>
             </CardHeader>
             <CardContent>
-              {sqLoading ? (
+              {sqErr ? (
+                <ErrorState onRetry={sqRefetch} className="border-0 py-8" />
+              ) : sqLoading ? (
                 <Skeleton className="h-20 w-full" />
               ) : (
                 <div className="space-y-2">

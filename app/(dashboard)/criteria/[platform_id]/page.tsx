@@ -23,6 +23,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 import {
   Select,
   SelectContent,
@@ -34,7 +35,7 @@ import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 import type { CriteriaSet, Criterion, CheckType, SqLevel } from '@/types/pss.types';
 import { SQ_LEVELS } from '@/types/pss.types';
-import { Plus, Trash2, Save, ListChecks, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, Save, ListChecks, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -302,6 +303,7 @@ function CriteriaSetCard({
             className="h-7 w-7 p-0 text-red-400 hover:text-red-600"
             title="Delete this criteria set"
             onClick={() => setConfirmDelete(true)}
+            disabled={deleting}
           >
             <Trash2 className="h-4 w-4" />
           </Button>
@@ -378,7 +380,7 @@ function CriteriaSetCard({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             className="bg-red-600 hover:bg-red-700"
             onClick={handleDelete}
@@ -458,7 +460,7 @@ function NewCriteriaSetForm({
             <Button onClick={handleCreate} disabled={!entityType.trim() || isLoading} size="sm">
               {isLoading ? 'Creating…' : 'Create'}
             </Button>
-            <Button variant="outline" size="sm" onClick={onClose}>
+            <Button variant="outline" size="sm" onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>
           </div>
@@ -479,8 +481,8 @@ export default function CriteriaPage() {
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>('all');
   const [addingNew, setAddingNew] = useState(false);
 
-  const { data: platforms } = useGetAllPlatformsQuery();
-  const { data: criteriaSets, isLoading } = useGetCriteriaByPlatformQuery(
+  const { data: platforms, isError: platformsError, refetch: platformsRefetch } = useGetAllPlatformsQuery();
+  const { data: criteriaSets, isLoading, isError, refetch } = useGetCriteriaByPlatformQuery(
     { platform_id: selectedPlatform },
     { skip: !selectedPlatform },
   );
@@ -502,18 +504,28 @@ export default function CriteriaPage() {
       {/* Platform + entity type selector */}
       <div className="flex flex-wrap items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
         <ListChecks className="h-4 w-4 text-indigo-500 shrink-0" />
-        <Select value={selectedPlatform} onValueChange={handlePlatformChange}>
-          <SelectTrigger className="w-56">
-            <SelectValue placeholder="Select platform" />
-          </SelectTrigger>
-          <SelectContent>
-            {platforms?.map((p) => (
-              <SelectItem key={p.platform_id} value={p.platform_id}>
-                {p.platform_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {platformsError ? (
+          <button
+            type="button"
+            onClick={() => platformsRefetch()}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Could not load platforms - Retry
+          </button>
+        ) : (
+          <Select value={selectedPlatform} onValueChange={handlePlatformChange}>
+            <SelectTrigger className="w-56">
+              <SelectValue placeholder="Select platform" />
+            </SelectTrigger>
+            <SelectContent>
+              {platforms?.map((p) => (
+                <SelectItem key={p.platform_id} value={p.platform_id}>
+                  {p.platform_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         {selectedPlatform && entityTypes.length > 0 && (
           <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
@@ -567,6 +579,8 @@ export default function CriteriaPage() {
             <Skeleton key={i} className="h-48 w-full rounded-xl" />
           ))}
         </div>
+      ) : isError ? (
+        <ErrorState onRetry={refetch} />
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 py-20 text-center">
           <ListChecks className="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />

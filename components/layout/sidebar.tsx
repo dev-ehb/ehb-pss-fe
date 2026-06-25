@@ -17,7 +17,7 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
-import { signOut } from 'next-auth/react';
+import { useSignOut } from '@/lib/use-sign-out';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -41,6 +41,7 @@ const NAV_ITEMS: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { signingOut, signOutNow } = useSignOut();
 
   return (
     <aside
@@ -52,7 +53,7 @@ export function Sidebar() {
       {/* Logo */}
       <div
         className={cn(
-          'flex h-14 items-center border-b border-gray-100 dark:border-gray-800 px-4',
+          'flex h-16 items-center border-b border-gray-100 dark:border-gray-800 px-4',
           collapsed ? 'justify-center' : 'gap-2.5',
         )}
       >
@@ -111,15 +112,16 @@ export function Sidebar() {
       <div className="border-t border-gray-100 dark:border-gray-800 px-2 py-2 space-y-0.5">
         {/* Sign Out */}
         <button
-          onClick={() => signOut({ callbackUrl: '/login' })}
+          onClick={signOutNow}
+          disabled={signingOut}
           title={collapsed ? 'Sign Out' : undefined}
           className={cn(
-            'flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200 transition-colors',
+            'flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
             collapsed && 'justify-center px-0',
           )}
         >
           <LogOut className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
-          {!collapsed && <span>Sign Out</span>}
+          {!collapsed && <span>{signingOut ? 'Signing out…' : 'Sign Out'}</span>}
         </button>
 
         {/* Collapse toggle */}

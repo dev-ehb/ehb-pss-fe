@@ -7,6 +7,7 @@ import { useGetAllPlatformsQuery } from '@/lib/store/api/platforms.api';
 import { DataTable } from '@/components/ui/data-table';
 import { AuditActionBadge } from '@/components/audit/audit-action-badge';
 import { Button } from '@/components/ui/button';
+import { ErrorState } from '@/components/ui/error-state';
 import {
   Select,
   SelectContent,
@@ -143,7 +144,7 @@ export default function AuditPage() {
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
 
-  const { data, isLoading, isFetching } = useSearchLogsQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useSearchLogsQuery({
     action: actionFilter === 'all' ? undefined : actionFilter,
     platform_id: platformFilter === 'all' ? undefined : platformFilter,
     performed_by: performedBy || undefined,
@@ -287,21 +288,25 @@ export default function AuditPage() {
       </div>
 
       {/* Table */}
-      <DataTable
-        data={data?.data ?? []}
-        columns={columns}
-        isLoading={isLoading || isFetching}
-        totalRows={data?.total}
-        pagination={pagination}
-        onPaginationChange={setPagination}
-        manualPagination
-        enableGlobalFilter={false}
-        emptyMessage={
-          hasFilters
-            ? 'No audit logs match the current filters.'
-            : 'No audit logs recorded yet.'
-        }
-      />
+      {isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : (
+        <DataTable
+          data={data?.data ?? []}
+          columns={columns}
+          isLoading={isLoading || isFetching}
+          totalRows={data?.total}
+          pagination={pagination}
+          onPaginationChange={setPagination}
+          manualPagination
+          enableGlobalFilter={false}
+          emptyMessage={
+            hasFilters
+              ? 'No audit logs match the current filters.'
+              : 'No audit logs recorded yet.'
+          }
+        />
+      )}
     </div>
   );
 }

@@ -9,6 +9,7 @@ import { AuditActionBadge } from '@/components/audit/audit-action-badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { formatDate, flattenObject } from '@/lib/utils';
@@ -19,7 +20,7 @@ export default function SqRequestDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  const { data: request, isLoading } = useGetRequestByIdQuery(id ?? '');
+  const { data: request, isLoading, isError, refetch } = useGetRequestByIdQuery(id ?? '');
   const { data: auditLogs, isLoading: auditLoading } = useGetLogsByRequestQuery(id ?? '');
 
   if (isLoading) {
@@ -30,6 +31,10 @@ export default function SqRequestDetailPage() {
         <Skeleton className="h-48 w-full" />
       </div>
     );
+  }
+
+  if (isError) {
+    return <ErrorState onRetry={refetch} />;
   }
 
   if (!request) {

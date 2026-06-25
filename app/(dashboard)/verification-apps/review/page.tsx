@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select';
@@ -108,7 +109,7 @@ function ReviewDetail({ req }: { req: VerificationRequest }) {
 
 export default function FacialReviewPage() {
   const [status, setStatus] = useState('needs_review');
-  const { data: requests, isLoading } = useGetVerificationRequestsQuery({ status });
+  const { data: requests, isLoading, isError, refetch } = useGetVerificationRequestsQuery({ status });
 
   return (
     <div className="space-y-4">
@@ -123,7 +124,9 @@ export default function FacialReviewPage() {
         </Select>
       </div>
 
-      {isLoading ? (
+      {isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : isLoading ? (
         <div className="space-y-3">{Array.from({ length: 2 }).map((_, i) => <Skeleton key={i} className="h-40 w-full rounded-xl" />)}</div>
       ) : !requests || requests.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 py-20 text-center">

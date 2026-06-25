@@ -4,15 +4,17 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGetAllPlatformsQuery } from '@/lib/store/api/platforms.api';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 import { Zap } from 'lucide-react';
 
 export default function RuleEngineIndexPage() {
   const router = useRouter();
-  const { data: platforms, isLoading } = useGetAllPlatformsQuery();
+  const { data: platforms, isLoading, isError, refetch } = useGetAllPlatformsQuery();
 
   useEffect(() => {
-    if (platforms && platforms.length > 0) {
-      router.replace(`/rule-engine/${platforms[0].platform_id}`);
+    const first = platforms?.[0];
+    if (first) {
+      router.replace(`/rule-engine/${first.platform_id}`);
     }
   }, [platforms, router]);
 
@@ -23,6 +25,10 @@ export default function RuleEngineIndexPage() {
         <Skeleton className="h-40 w-full rounded-xl" />
       </div>
     );
+  }
+
+  if (isError) {
+    return <ErrorState onRetry={refetch} />;
   }
 
   if (!platforms || platforms.length === 0) {
