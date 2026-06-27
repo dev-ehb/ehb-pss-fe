@@ -14,9 +14,11 @@ interface GetEdrQueueParams {
 }
 
 interface EdrDecisionBody {
-  decision: 'approved' | 'conditional' | 'rejected';
+  decision: 'approved' | 'conditional' | 'rejected' | 'changes_requested';
   sq_level_assigned?: SqLevel;
   rejection_reason?: string;
+  review_message?: string;
+  requested_items?: string[];
   reviewed_by: string;
 }
 
@@ -30,6 +32,25 @@ interface EdrOverrideBody {
 interface EdrEditBody {
   entity_data: Record<string, unknown>;
   edited_by: string;
+}
+
+export interface SubmissionSnapshot {
+  id: string;
+  status: string;
+  sq_level_assigned?: number | null;
+  sq_level_calculated?: number | null;
+  entity_data?: Record<string, unknown>;
+  review_message?: string | null;
+  requested_items?: string[];
+  decided_by?: string | null;
+  created_at: string;
+  decided_at?: string | null;
+}
+export interface EntitySubmissionHistory {
+  entity_id: string;
+  platform_id: string;
+  changes_requested_count: number;
+  submissions: SubmissionSnapshot[];
 }
 
 export const edrApi = baseApi.injectEndpoints({
@@ -49,6 +70,15 @@ export const edrApi = baseApi.injectEndpoints({
     getEdrReviewDetail: build.query<EdrFullDetail, string>({
       query: (sq_request_id) => `/edr/review/${sq_request_id}`,
       providesTags: (_result, _error, id) => [{ type: 'EdrReview', id }],
+    }),
+
+    getEntityHistory: build.query<
+      EntitySubmissionHistory,
+      { entity_id: string; platform_id: string }
+    >({
+      query: ({ entity_id, platform_id }) =>
+        `/sq/requests/by-entity/${entity_id}?platform_id=${platform_id}`,
+      providesTags: (_r, _e, { entity_id }) => [{ type: 'SqRequest', id: entity_id }],
     }),
 
     submitEdrDecision: build.mutation<
@@ -106,4 +136,5 @@ export const {
   useSubmitEdrDecisionMutation,
   useSubmitEdrOverrideMutation,
   useEditEdrRequestMutation,
+  useGetEntityHistoryQuery,
 } = edrApi;

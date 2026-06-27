@@ -171,8 +171,7 @@ export type RuleOperator = 'gte' | 'lte' | 'eq' | 'between';
 export type RuleAction = 'auto_approve' | 'franchise' | 'edr' | 'reject';
 
 export interface PlatformRule {
-  id: string;       // Prisma/PostgreSQL field name
-  _id?: string;     // kept for backward-compat (unused — backend returns 'id')
+  id: string;
   platform_id: string;
   entity_type: string | null;
   entity_subtype: string | null;

@@ -7,6 +7,7 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import {
   useGetEdrReviewDetailQuery,
+  useGetEntityHistoryQuery,
   useSubmitEdrDecisionMutation,
   useSubmitEdrOverrideMutation,
   useEditEdrRequestMutation,
@@ -38,9 +39,11 @@ import { ArrowLeft, Edit3, RotateCcw, Loader2 } from 'lucide-react';
 
 const decisionSchema = z
   .object({
-    decision: z.enum(['approved', 'conditional', 'rejected']),
+    decision: z.enum(['approved', 'conditional', 'rejected', 'changes_requested']),
     sq_level_assigned: z.coerce.number().optional(),
     rejection_reason: z.string().optional(),
+    review_message: z.string().optional(),
+    requested_items: z.array(z.string()).optional(),
     reviewed_by: z.string().min(1, 'Reviewer name required'),
   })
   .superRefine((data, ctx) => {
@@ -61,6 +64,13 @@ const decisionSchema = z
         path: ['rejection_reason'],
       });
     }
+    if (data.decision === 'changes_requested' && !data.review_message?.trim()) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: 'Message to the user is required',
+        path: ['review_message'],
+      });
+    }
   });
 
 const overrideSchema = z.object({
@@ -76,6 +86,44 @@ type OverrideForm = z.infer<typeof overrideSchema>;
 
 const SQ_LEVELS: SqLevel[] = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
 
+const DECISION_LABELS: Record<'approved' | 'conditional' | 'rejected' | 'changes_requested', string> = {
+  approved: 'Approved',
+  conditional: 'Conditional',
+  rejected: 'Rejected',
+  changes_requested: 'Request Changes',
+};
+
+const ITEM_LABELS: Record<string, string> = {
+  display_name: 'Display name', bio: 'Bio', description: 'Description', role: 'Role',
+  cnic_front: 'CNIC front', cnic_back: 'CNIC back', address: 'Address',
+  address_proof: 'Address proof', facial: 'Facial verification (selfie)', platform: 'Platform',
+};
+
+const isImageValue = (key: string, value: string): boolean =>
+  /^data:image\//.test(value) ||
+  (/^https?:\/\/\S+$/.test(value) && /(cnic|facial|selfie|photo|proof|avatar|image)/i.test(key));
+
+function fmtHistVal(v: unknown): string {
+  if (v === undefined || v === null || v === '') return '—';
+  const s = String(v);
+  if (/^data:image\//.test(s) || /^https?:\/\//.test(s)) return '(updated)';
+  return s.length > 50 ? s.slice(0, 47) + '…' : s;
+}
+function diffSnapshots(
+  prev: Record<string, unknown> | undefined,
+  curr: Record<string, unknown> | undefined,
+): { key: string; before: unknown; after: unknown }[] {
+  const a = (prev ?? {}) as Record<string, unknown>;
+  const b = (curr ?? {}) as Record<string, unknown>;
+  const keys = Array.from(new Set([...Object.keys(a), ...Object.keys(b)]));
+  const out: { key: string; before: unknown; after: unknown }[] = [];
+  for (const k of keys) {
+    if (k === 'platform' || k === 'role') continue;
+    if (JSON.stringify(a[k]) !== JSON.stringify(b[k])) out.push({ key: k, before: a[k], after: b[k] });
+  }
+  return out;
+}
+
 // ── Page ──────────────────────────────────────────────────────────────────────
 
 export default function EdrReviewPage() {
@@ -89,10 +137,18 @@ export default function EdrReviewPage() {
   const [submitOverride, { isLoading: overrideLoading }] = useSubmitEdrOverrideMutation();
   const [editRequest, { isLoading: editLoading }] = useEditEdrRequestMutation();
 
+  const histEntityId = detail?.sq_request?.entity_id;
+  const histPlatformId = detail?.sq_request?.platform_id;
+  const { data: history } = useGetEntityHistoryQuery(
+    { entity_id: histEntityId ?? '', platform_id: histPlatformId ?? '' },
+    { skip: !histEntityId || !histPlatformId },
+  );
+
   const decisionForm = useForm<DecisionForm>({ resolver: zodResolver(decisionSchema) });
   const overrideForm = useForm<OverrideForm>({ resolver: zodResolver(overrideSchema) });
 
   const watchedDecision = decisionForm.watch('decision');
+  const watchedItems = decisionForm.watch('requested_items') ?? [];
   const watchedOverrideDecision = overrideForm.watch('decision');
 
   const onDecide = async (data: DecisionForm) => {
@@ -103,6 +159,8 @@ export default function EdrReviewPage() {
           decision: data.decision,
           sq_level_assigned: data.sq_level_assigned as SqLevel | undefined,
           rejection_reason: data.rejection_reason,
+          review_message: data.review_message,
+          requested_items: data.requested_items,
           reviewed_by: data.reviewed_by,
         },
       }).unwrap();
@@ -249,12 +307,22 @@ export default function EdrReviewPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-2 gap-2">
-                  {entityFields.map(({ key, value }) => (
-                    <div key={key} className="rounded-lg bg-gray-50 dark:bg-gray-800 p-2.5">
-                      <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{key}</span>
-                      <p className="text-sm text-gray-900 dark:text-gray-100 mt-0.5 break-all">{value}</p>
-                    </div>
-                  ))}
+                  {entityFields.map(({ key, value }) => {
+                    const img = isImageValue(key, value);
+                    return (
+                      <div key={key} className={`rounded-lg bg-gray-50 dark:bg-gray-800 p-2.5 ${img ? 'col-span-2' : ''}`}>
+                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ITEM_LABELS[key] ?? key}</span>
+                        {img ? (
+                          <a href={value} target="_blank" rel="noreferrer" className="mt-1 block">
+                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                            <img src={value} alt={key} className="max-h-56 w-auto rounded-md border border-gray-200 dark:border-gray-700 object-contain bg-white" />
+                          </a>
+                        ) : (
+                          <p className="text-sm text-gray-900 dark:text-gray-100 mt-0.5 break-all">{value}</p>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
               )}
             </CardContent>
@@ -275,6 +343,74 @@ export default function EdrReviewPage() {
               <Progress value={criteriaPercent} className="h-2" />
             </CardContent>
           </Card>
+
+          {/* Change history */}
+          {history && (history.submissions.length > 1 || history.changes_requested_count > 0) && (
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm flex items-center justify-between">
+                  <span>Change History</span>
+                  {history.changes_requested_count > 0 && (
+                    <span className="rounded-full bg-orange-100 text-orange-700 text-xs font-medium px-2 py-0.5">
+                      Changes requested ×{history.changes_requested_count}
+                    </span>
+                  )}
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  {history.submissions.map((s, i) => {
+                    const prev = i > 0 ? history.submissions[i - 1] : undefined;
+                    const changes = prev ? diffSnapshots(prev.entity_data, s.entity_data) : [];
+                    return (
+                      <div key={s.id} className="border-l-2 border-gray-200 dark:border-gray-700 pl-3">
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <span className="font-semibold text-gray-700 dark:text-gray-300">#{i + 1}</span>
+                          <span className="rounded bg-gray-100 dark:bg-gray-800 px-1.5 py-0.5 text-gray-600 dark:text-gray-300 capitalize">
+                            {(s.status ?? '').replace(/_/g, ' ')}
+                          </span>
+                          <span className="text-gray-400">{formatDate(s.created_at)}</span>
+                        </div>
+                        {s.status === 'changes_requested' && (
+                          <div className="mt-1 rounded bg-orange-50 border border-orange-200 px-2 py-1.5">
+                            <p className="text-xs text-orange-800">{s.review_message ?? 'Changes requested'}</p>
+                            {s.requested_items && s.requested_items.length > 0 && (
+                              <div className="mt-1 flex flex-wrap gap-1">
+                                {s.requested_items.map((it) => (
+                                  <span key={it} className="rounded bg-orange-100 text-orange-700 text-[10px] px-1.5 py-0.5">
+                                    {ITEM_LABELS[it] ?? it}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                        {i > 0 && (
+                          <div className="mt-1">
+                            {changes.length === 0 ? (
+                              <p className="text-[11px] text-gray-400">No field changes from the previous submission.</p>
+                            ) : (
+                              <div className="space-y-0.5">
+                                <p className="text-[11px] font-medium text-gray-500">What changed:</p>
+                                {changes.map((ch) => (
+                                  <p key={ch.key} className="text-[11px] text-gray-600 dark:text-gray-300 break-all">
+                                    <span className="font-medium">{ITEM_LABELS[ch.key] ?? ch.key}:</span>{' '}
+                                    <span className="text-red-500 line-through">{fmtHistVal(ch.before)}</span>
+                                    {' → '}
+                                    <span className="text-green-600">{fmtHistVal(ch.after)}</span>
+                                  </p>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          )}
 
           {/* Audit trail */}
           <Card>
@@ -313,7 +449,7 @@ export default function EdrReviewPage() {
                   {/* Decision */}
                   <div className="space-y-1">
                     <Label>Decision</Label>
-                    <Select onValueChange={(v) => overrideForm.setValue('decision', v as DecisionForm['decision'])}>
+                    <Select onValueChange={(v) => overrideForm.setValue('decision', v as OverrideForm['decision'])}>
                       <SelectTrigger><SelectValue placeholder="Select decision" /></SelectTrigger>
                       <SelectContent>
                         <SelectItem value="approved">Approve</SelectItem>
@@ -376,8 +512,8 @@ export default function EdrReviewPage() {
                   {/* Decision radio */}
                   <div className="space-y-1">
                     <Label>Decision *</Label>
-                    <div className="grid grid-cols-3 gap-2">
-                      {(['approved', 'conditional', 'rejected'] as const).map((d) => (
+                    <div className="grid grid-cols-2 gap-2">
+                      {(['approved', 'conditional', 'rejected', 'changes_requested'] as const).map((d) => (
                         <label
                           key={d}
                           className={`flex flex-col items-center rounded-lg border p-3 cursor-pointer text-xs font-medium transition-colors ${
@@ -390,7 +526,7 @@ export default function EdrReviewPage() {
                             value={d}
                             {...decisionForm.register('decision')}
                           />
-                          {d.charAt(0).toUpperCase() + d.slice(1)}
+                          {DECISION_LABELS[d]}
                         </label>
                       ))}
                     </div>
@@ -429,6 +565,50 @@ export default function EdrReviewPage() {
                       {decisionForm.formState.errors.rejection_reason && (
                         <p className="text-xs text-destructive">{decisionForm.formState.errors.rejection_reason.message}</p>
                       )}
+                    </div>
+                  )}
+
+                  {/* Request Changes: message + items to resubmit */}
+                  {watchedDecision === 'changes_requested' && (
+                    <div className="space-y-3">
+                      <div className="space-y-1">
+                        <Label>Message to user *</Label>
+                        <Textarea
+                          {...decisionForm.register('review_message')}
+                          placeholder="Explain what's wrong and what to resubmit (e.g. your selfie is blurry — please retake in good light)…"
+                          rows={3}
+                        />
+                        {decisionForm.formState.errors.review_message && (
+                          <p className="text-xs text-destructive">{decisionForm.formState.errors.review_message.message}</p>
+                        )}
+                      </div>
+                      <div className="space-y-1">
+                        <Label>Items to resubmit</Label>
+                        <div className="grid grid-cols-2 gap-1.5">
+                          {Object.keys(sq_request.entity_data ?? {}).map((key) => {
+                            const checked = watchedItems.includes(key);
+                            return (
+                              <label
+                                key={key}
+                                className="flex items-center gap-2 rounded-md border border-gray-200 dark:border-gray-700 px-2 py-1.5 text-xs cursor-pointer"
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={checked}
+                                  onChange={(e) => {
+                                    const next = e.target.checked
+                                      ? [...watchedItems, key]
+                                      : watchedItems.filter((k) => k !== key);
+                                    decisionForm.setValue('requested_items', next);
+                                  }}
+                                />
+                                <span className="truncate">{ITEM_LABELS[key] ?? key}</span>
+                              </label>
+                            );
+                          })}
+                        </div>
+                        <p className="text-[11px] text-gray-400">Tick the fields the user must fix. Optional — the message alone is enough.</p>
+                      </div>
                     </div>
                   )}
 
