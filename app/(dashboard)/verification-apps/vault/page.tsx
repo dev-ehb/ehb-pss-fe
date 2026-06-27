@@ -37,7 +37,7 @@ export default function VaultPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
         <VaultIcon className="h-4 w-4 text-indigo-500 shrink-0" />
         <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Verification Vault</h1>
       </div>

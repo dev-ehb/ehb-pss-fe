@@ -30,7 +30,7 @@ export default function DashboardLayout({
           */}
           <main className="relative flex-1 overflow-y-auto">
             <NavigationLoader />
-            <div className="p-6">{children}</div>
+            <div className="p-3 sm:p-6">{children}</div>
           </main>
         </div>
       </div>

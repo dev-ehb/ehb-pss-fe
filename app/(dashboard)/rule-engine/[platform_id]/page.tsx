@@ -109,7 +109,7 @@ function ActionBadge({ action }: { action: RuleAction }) {
   return (
     <span
       className={cn(
-        'inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium',
+        'inline-flex shrink-0 items-center whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium',
         action === 'auto_approve'
           ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
           : action === 'franchise'
@@ -284,7 +284,7 @@ function RuleSlideOver({
           </div>
 
           {/* Scope: blank = applies to any entity_type / subtype */}
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div className="space-y-1.5">
               <Label htmlFor="entity_type">Entity Type <span className="text-gray-400 font-normal">(blank = any)</span></Label>
               <input
@@ -480,89 +480,97 @@ function RuleCard({
 }) {
   const [toggle] = useToggleRuleMutation();
 
+  const handleToggle = async () => {
+    try {
+      await toggle({ rule_id: rule.id, platform_id: platformId }).unwrap();
+    } catch {
+      toast({ title: 'Failed to toggle rule', variant: 'destructive' });
+    }
+  };
+
+  // Rendered twice (right side on desktop, bottom row on mobile) so the rule
+  // text always gets the full width instead of squeezing beside the buttons.
+  const actions = (
+    <>
+      <Button
+        variant="ghost"
+        size="sm"
+        className="h-7 w-7 p-0"
+        title={rule.active ? 'Disable rule' : 'Enable rule'}
+        onClick={handleToggle}
+      >
+        {rule.active ? (
+          <Power className="h-3.5 w-3.5 text-green-600" />
+        ) : (
+          <PowerOff className="h-3.5 w-3.5 text-gray-400" />
+        )}
+      </Button>
+      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onEdit}>
+        <Pencil className="h-3.5 w-3.5 text-blue-600" />
+      </Button>
+      <Button variant="ghost" size="sm" className="h-7 w-7 p-0" onClick={onDelete}>
+        <Trash2 className="h-3.5 w-3.5 text-red-500" />
+      </Button>
+    </>
+  );
+
   return (
     <div
       className={cn(
-        'flex items-start gap-4 rounded-xl border p-4 transition-all',
+        'rounded-xl border p-3 transition-all sm:p-4',
         rule.active
           ? 'border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600'
           : 'border-dashed border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 opacity-60',
       )}
     >
-      <div className="flex flex-col items-center gap-1 pt-1">
-        <GripVertical className="h-4 w-4 text-gray-300 dark:text-gray-600" />
-        <span className="text-xs font-bold text-gray-400 dark:text-gray-500">#{rule.priority}</span>
-      </div>
-
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 mb-2">
-          <span className="font-medium text-gray-900 dark:text-gray-100 text-sm">{rule.rule_name}</span>
-          <ActionBadge action={rule.action} />
-          {rule.entity_type && (
-            <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
-              {rule.entity_type}{rule.entity_subtype ? ` / ${rule.entity_subtype}` : ''}
-            </span>
-          )}
-          {!rule.active && (
-            <span className="text-xs text-gray-400 dark:text-gray-500 italic">disabled</span>
-          )}
+      <div className="flex items-start gap-3 sm:gap-4">
+        <div className="flex flex-col items-center gap-1 pt-0.5 sm:pt-1">
+          <GripVertical className="hidden h-4 w-4 text-gray-300 dark:text-gray-600 sm:block" />
+          <span className="text-xs font-bold text-gray-400 dark:text-gray-500">#{rule.priority}</span>
         </div>
-        <div className="flex flex-wrap gap-3 text-xs text-gray-500 dark:text-gray-400">
-          <span className="flex items-center gap-1">
-            <span className="font-medium text-gray-700 dark:text-gray-300">Criteria:</span>
-            {operatorLabel(rule.operator, rule.criteria_threshold, rule.threshold_max)}
-          </span>
-          {rule.sq_level_assigned && (
+
+        <div className="flex-1 min-w-0">
+          <div className="mb-2 flex flex-wrap items-center gap-2">
+            <span className="text-sm font-medium text-gray-900 dark:text-gray-100 break-words">
+              {rule.rule_name}
+            </span>
+            <ActionBadge action={rule.action} />
+            {rule.entity_type && (
+              <span className="shrink-0 whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                {rule.entity_type}{rule.entity_subtype ? ` / ${rule.entity_subtype}` : ''}
+              </span>
+            )}
+            {!rule.active && (
+              <span className="text-xs italic text-gray-400 dark:text-gray-500">disabled</span>
+            )}
+          </div>
+          <div className="flex flex-wrap gap-x-3 gap-y-1 text-xs text-gray-500 dark:text-gray-400">
             <span className="flex items-center gap-1">
-              <span className="font-medium text-gray-700 dark:text-gray-300">SQ Level:</span>
-              SQ{rule.sq_level_assigned}
+              <span className="font-medium text-gray-700 dark:text-gray-300">Criteria:</span>
+              {operatorLabel(rule.operator, rule.criteria_threshold, rule.threshold_max)}
             </span>
-          )}
-          {rule.rejection_reason && (
-            <span className="max-w-xs truncate">
-              <span className="font-medium text-gray-700 dark:text-gray-300">Reason:</span>{' '}
-              {rule.rejection_reason}
-            </span>
-          )}
+            {rule.sq_level_assigned && (
+              <span className="flex items-center gap-1">
+                <span className="font-medium text-gray-700 dark:text-gray-300">SQ Level:</span>
+                SQ{rule.sq_level_assigned}
+              </span>
+            )}
+            {rule.rejection_reason && (
+              <span className="max-w-xs truncate">
+                <span className="font-medium text-gray-700 dark:text-gray-300">Reason:</span>{' '}
+                {rule.rejection_reason}
+              </span>
+            )}
+          </div>
         </div>
+
+        {/* Desktop: actions on the right */}
+        <div className="hidden shrink-0 items-center gap-1 sm:flex">{actions}</div>
       </div>
 
-      <div className="flex items-center gap-1 shrink-0">
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 w-7 p-0"
-          title={rule.active ? 'Disable rule' : 'Enable rule'}
-          onClick={async () => {
-            try {
-              await toggle({ rule_id: rule.id, platform_id: platformId }).unwrap();
-            } catch {
-              toast({ title: 'Failed to toggle rule', variant: 'destructive' });
-            }
-          }}
-        >
-          {rule.active ? (
-            <Power className="h-3.5 w-3.5 text-green-600" />
-          ) : (
-            <PowerOff className="h-3.5 w-3.5 text-gray-400" />
-          )}
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 w-7 p-0"
-          onClick={onEdit}
-        >
-          <Pencil className="h-3.5 w-3.5 text-blue-600" />
-        </Button>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="h-7 w-7 p-0"
-          onClick={onDelete}
-        >
-          <Trash2 className="h-3.5 w-3.5 text-red-500" />
-        </Button>
+      {/* Mobile: actions on their own row below, right-aligned */}
+      <div className="mt-2.5 flex items-center justify-end gap-1 border-t border-gray-100 pt-2 dark:border-gray-800 sm:hidden">
+        {actions}
       </div>
     </div>
   );
@@ -616,10 +624,10 @@ export default function RuleEnginePage() {
   return (
     <div className="space-y-4">
       {/* Platform selector header */}
-      <div className="flex items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
         <Zap className="h-4 w-4 text-yellow-500 shrink-0" />
         <Select value={selectedPlatform} onValueChange={handlePlatformChange}>
-          <SelectTrigger className="w-56">
+          <SelectTrigger className="w-full sm:w-56">
             <SelectValue placeholder="Select platform" />
           </SelectTrigger>
           <SelectContent>
@@ -685,12 +693,12 @@ export default function RuleEnginePage() {
         </div>
       ) : (
         <Card>
-          <CardHeader className="pb-2">
+          <CardHeader className="p-3 pb-2 sm:p-6 sm:pb-2">
             <CardTitle className="text-sm text-gray-500 dark:text-gray-400">
               Rules are evaluated in priority order (lowest number first). First match wins.
             </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2.5 p-3 pt-0 sm:p-6 sm:pt-0">
             {sortedRules.map((rule) => (
               <RuleCard
                 key={rule.id}

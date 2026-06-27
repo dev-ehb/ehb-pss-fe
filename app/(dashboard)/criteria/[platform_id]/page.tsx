@@ -68,15 +68,15 @@ function CriterionRow({
   const needsValue = criterion.check_type !== 'presence' && !isVerificationApp;
 
   return (
-    <div className="grid grid-cols-12 gap-2 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3 items-start">
+    <div className="grid grid-cols-2 gap-x-2 gap-y-2 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3 lg:grid-cols-12 lg:items-start">
       {/* Index */}
-      <div className="col-span-1 flex items-center justify-center pt-2">
-        <span className="text-xs font-bold text-gray-400 dark:text-gray-500">{index + 1}</span>
+      <div className="col-span-2 flex items-center justify-start lg:col-span-1 lg:justify-center lg:pt-2">
+        <span className="text-xs font-bold text-gray-400 dark:text-gray-500">#{index + 1}</span>
       </div>
 
       {/* Label */}
-      <div className="col-span-3 space-y-1">
-        <Label className="text-xs">Label</Label>
+      <div className="col-span-1 space-y-1 lg:col-span-3">
+        <Label className="text-xs lg:hidden">Label</Label>
         <input
           className="w-full rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none"
           placeholder="e.g. Verified email"
@@ -86,8 +86,8 @@ function CriterionRow({
       </div>
 
       {/* Field key */}
-      <div className="col-span-2 space-y-1">
-        <Label className="text-xs">{isVerificationApp ? 'App ID' : 'Field Key'}</Label>
+      <div className="col-span-1 space-y-1 lg:col-span-2">
+        <Label className="text-xs lg:hidden">{isVerificationApp ? 'App ID' : 'Field Key'}</Label>
         <input
           className="w-full rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs font-mono focus:border-blue-500 focus:outline-none"
           placeholder={isVerificationApp ? 'facial' : 'entity_data.email'}
@@ -102,29 +102,33 @@ function CriterionRow({
 
       {/* Check type */}
       <div className="col-span-2 space-y-1">
-        <Label className="text-xs">Check Type</Label>
-        <select
-          className="w-full rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none"
+        <Label className="text-xs lg:hidden">Check Type</Label>
+        <Select
           value={criterion.check_type}
-          onChange={(e) =>
+          onValueChange={(v) =>
             onChange({
               ...criterion,
-              check_type: e.target.value as CheckType,
-              check_value: e.target.value === 'presence' ? null : criterion.check_value,
+              check_type: v as CheckType,
+              check_value: v === 'presence' ? null : criterion.check_value,
             })
           }
         >
-          {CHECK_TYPES.map((ct) => (
-            <option key={ct.value} value={ct.value}>
-              {ct.label}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="h-auto px-2 py-1.5 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CHECK_TYPES.map((ct) => (
+              <SelectItem key={ct.value} value={ct.value} className="text-xs">
+                {ct.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Check value */}
-      <div className="col-span-1 space-y-1">
-        <Label className="text-xs">Value</Label>
+      <div className="col-span-1 space-y-1 lg:col-span-1">
+        <Label className="text-xs lg:hidden">Value</Label>
         <input
           className="w-full rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none disabled:opacity-40"
           placeholder={
@@ -143,23 +147,27 @@ function CriterionRow({
       </div>
 
       {/* SQ Min */}
-      <div className="col-span-1 space-y-1">
-        <Label className="text-xs">SQ Min</Label>
-        <select
-          className="w-full rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none"
-          value={criterion.sq_min}
-          onChange={(e) => onChange({ ...criterion, sq_min: Number(e.target.value) as SqLevel })}
+      <div className="col-span-1 space-y-1 lg:col-span-1">
+        <Label className="text-xs lg:hidden">SQ Min</Label>
+        <Select
+          value={String(criterion.sq_min)}
+          onValueChange={(v) => onChange({ ...criterion, sq_min: Number(v) as SqLevel })}
         >
-          {SQ_LEVELS.map((lvl) => (
-            <option key={lvl} value={lvl}>
-              SQ{lvl}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="h-auto px-2 py-1.5 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SQ_LEVELS.map((lvl) => (
+              <SelectItem key={lvl} value={String(lvl)} className="text-xs">
+                SQ{lvl}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Required */}
-      <div className="col-span-1 space-y-1 flex flex-col items-center">
+      <div className="col-span-1 flex flex-col items-start space-y-1 lg:col-span-1 lg:items-center">
         <Label className="text-xs">Required</Label>
         <input
           type="checkbox"
@@ -170,7 +178,7 @@ function CriterionRow({
       </div>
 
       {/* Remove */}
-      <div className="col-span-1 flex items-end pb-0.5">
+      <div className="col-span-1 flex items-center justify-end lg:col-span-1 lg:items-end lg:pb-0.5">
         <Button
           variant="ghost"
           size="sm"
@@ -326,7 +334,7 @@ function CriteriaSetCard({
         <CardContent className="space-y-2">
           {/* Column headers */}
           {criteria.length > 0 && (
-            <div className="grid grid-cols-12 gap-2 px-3 text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+            <div className="hidden grid-cols-12 gap-2 px-3 text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide lg:grid">
               <div className="col-span-1">#</div>
               <div className="col-span-3">Label</div>
               <div className="col-span-2">Field Key</div>
@@ -365,6 +373,20 @@ function CriteriaSetCard({
             <Plus className="h-4 w-4 mr-1" />
             Add Criterion
           </Button>
+
+          {/* Mobile-only Save at the bottom — saves a long scroll back up to the
+              header after adding/editing criteria. Desktop uses the header Save. */}
+          {dirty && (
+            <Button
+              size="sm"
+              className="w-full lg:hidden"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              <Save className="mr-1 h-3.5 w-3.5" />
+              {saving ? 'Saving…' : 'Save changes'}
+            </Button>
+          )}
         </CardContent>
       )}
     </Card>
@@ -429,7 +451,7 @@ function NewCriteriaSetForm({
   return (
     <Card className="border-dashed border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/20">
       <CardContent className="p-4">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-1">
             <Label htmlFor="new-entity-type" className="text-sm font-medium">
               New Entity Type
@@ -456,7 +478,7 @@ function NewCriteriaSetForm({
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             />
           </div>
-          <div className="flex gap-2 pt-5">
+          <div className="grid grid-cols-2 gap-2 sm:flex">
             <Button onClick={handleCreate} disabled={!entityType.trim() || isLoading} size="sm">
               {isLoading ? 'Creating…' : 'Create'}
             </Button>
@@ -514,7 +536,7 @@ export default function CriteriaPage() {
           </button>
         ) : (
           <Select value={selectedPlatform} onValueChange={handlePlatformChange}>
-            <SelectTrigger className="w-56">
+            <SelectTrigger className="w-full sm:w-56">
               <SelectValue placeholder="Select platform" />
             </SelectTrigger>
             <SelectContent>
@@ -529,7 +551,7 @@ export default function CriteriaPage() {
 
         {selectedPlatform && entityTypes.length > 0 && (
           <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Entity type" />
             </SelectTrigger>
             <SelectContent>

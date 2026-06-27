@@ -113,11 +113,11 @@ export default function FacialReviewPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
         <ClipboardCheck className="h-4 w-4 text-indigo-500 shrink-0" />
         <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Facial Review Queue</h1>
         <Select value={status} onValueChange={setStatus}>
-          <SelectTrigger className="w-44 ml-auto"><SelectValue /></SelectTrigger>
+          <SelectTrigger className="w-full sm:w-44 sm:ml-auto"><SelectValue /></SelectTrigger>
           <SelectContent>
             {STATUSES.map((s) => <SelectItem key={s} value={s}>{s}</SelectItem>)}
           </SelectContent>

@@ -239,20 +239,22 @@ export default function PlatformDetailPage() {
     : '—';
 
   return (
-    <div className="space-y-6 max-w-4xl">
-      {/* Header */}
-      <div className="flex items-center gap-4">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
+    <div className="space-y-6">
+      {/* Header — stacks on mobile (Back + badge top, title below), inline on desktop */}
+      <div className="flex flex-wrap items-center gap-x-3 gap-y-2">
+        <Button variant="ghost" size="sm" className="order-1 -ml-2" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-1" />
           Back
         </Button>
-        <div className="flex-1">
-          <h2 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{platform.platform_name}</h2>
+        <div className="order-3 min-w-0 basis-full sm:order-2 sm:basis-0 sm:flex-1">
+          <h2 className="text-lg sm:text-xl font-semibold text-gray-900 dark:text-gray-100 break-words">
+            {platform.platform_name}
+          </h2>
           <p className="text-sm text-gray-500 dark:text-gray-400 font-mono">{platform.platform_id}</p>
         </div>
         <span
           className={cn(
-            'rounded-full px-3 py-1 text-sm font-medium',
+            'order-2 ml-auto shrink-0 rounded-full px-3 py-1 text-sm font-medium capitalize sm:order-3 sm:ml-0',
             platform.status === 'active'
               ? 'bg-green-100 text-green-700 dark:bg-green-900/40 dark:text-green-300'
               : platform.status === 'suspended'
@@ -321,7 +323,7 @@ export default function PlatformDetailPage() {
             <div className="space-y-1.5">
               <Label>Current API Key</Label>
               <div className="flex items-center gap-2">
-                <code className="flex-1 rounded-lg bg-gray-900 px-3 py-2 text-xs font-mono text-amber-400 overflow-hidden">
+                <code className="flex-1 overflow-hidden rounded-lg bg-gray-900 px-3 py-2 text-xs font-mono text-amber-400 dark:bg-gray-950 dark:ring-1 dark:ring-inset dark:ring-gray-700">
                   {showKey ? platform.api_key : maskedKey}
                 </code>
                 <Button
@@ -352,7 +354,7 @@ export default function PlatformDetailPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="text-red-600 border-red-200 hover:bg-red-50"
+                className="text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-950/30"
                 onClick={() => setRotateDialogOpen(true)}
                 disabled={rotatingKey}
               >
@@ -364,8 +366,8 @@ export default function PlatformDetailPage() {
             <Separator />
 
             {/* Status toggle */}
-            <div className="flex items-center justify-between">
-              <div>
+            <div className="flex items-center justify-between gap-3">
+              <div className="min-w-0">
                 <p className="text-sm font-medium text-gray-900 dark:text-gray-100">Platform Status</p>
                 <p className="text-xs text-gray-500 dark:text-gray-400">
                   {platform.status === 'active'
@@ -377,9 +379,10 @@ export default function PlatformDetailPage() {
                 variant="outline"
                 size="sm"
                 className={cn(
+                  'shrink-0',
                   platform.status === 'active'
-                    ? 'text-red-600 border-red-200 hover:bg-red-50'
-                    : 'text-green-600 border-green-200 hover:bg-green-50',
+                    ? 'text-red-600 border-red-200 hover:bg-red-50 dark:text-red-400 dark:border-red-900/50 dark:hover:bg-red-950/30'
+                    : 'text-green-600 border-green-200 hover:bg-green-50 dark:text-green-400 dark:border-green-900/50 dark:hover:bg-green-950/30',
                 )}
                 onClick={() => setSuspendDialogOpen(true)}
                 disabled={updatingStatus}
@@ -423,7 +426,7 @@ export default function PlatformDetailPage() {
                 <p className="text-xs text-red-500">{errors.webhook_url.message}</p>
               )}
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Button
                 type="submit"
                 size="sm"
@@ -441,8 +444,8 @@ export default function PlatformDetailPage() {
                 <Send className="h-3.5 w-3.5 mr-1.5" />
                 {pinging ? 'Sending…' : 'Test Ping'}
               </Button>
-              <div className="ml-auto text-xs text-gray-400 dark:text-gray-500 flex items-center gap-1.5">
-                <AlertCircle className="h-3.5 w-3.5" />
+              <div className="flex basis-full items-center gap-1.5 text-xs text-gray-400 dark:text-gray-500 sm:ml-auto sm:basis-auto">
+                <AlertCircle className="h-3.5 w-3.5 shrink-0" />
                 Deliveries signed with HMAC-SHA256
               </div>
             </div>

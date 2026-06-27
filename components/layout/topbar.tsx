@@ -1,9 +1,10 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Bell, RefreshCw, Moon, Sun, LogOut } from 'lucide-react';
+import { Bell, RefreshCw, Moon, Sun, LogOut, Menu } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useSignOut } from '@/lib/use-sign-out';
+import { useMobileSidebar } from '@/lib/use-mobile-sidebar';
 import { Button } from '@/components/ui/button';
 import { useAppDispatch } from '@/lib/store/hooks';
 import { baseApi } from '@/lib/store/api/base-api';
@@ -38,6 +39,7 @@ export function Topbar() {
   const { theme, toggleTheme } = useTheme();
   const { data: session } = useSession();
   const { signingOut, signOutNow } = useSignOut();
+  const { openSidebar } = useMobileSidebar();
 
   const handleRefresh = () => {
     dispatch(baseApi.util.invalidateTags(['SqRequest', 'EdrReview', 'Franchise', 'Stats']));
@@ -48,13 +50,23 @@ export function Topbar() {
   const initial = name.charAt(0).toUpperCase();
 
   return (
-    <header className="flex h-16 items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6">
-      <div>
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{getPageTitle(pathname)}</h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400">PSS Platform Support Services</p>
+    <header className="flex h-16 items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 sm:px-6">
+      <div className="flex items-center gap-3 min-w-0">
+        {/* Hamburger — opens the mobile drawer (mobile only) */}
+        <button
+          onClick={openSidebar}
+          aria-label="Open menu"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 lg:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div className="min-w-0">
+          <h1 className="truncate text-lg font-semibold text-gray-900 dark:text-gray-100">{getPageTitle(pathname)}</h1>
+          <p className="truncate text-xs text-gray-500 dark:text-gray-400">PSS Platform Support Services</p>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1 sm:gap-3">
         <Button
           variant="ghost"
           size="icon"

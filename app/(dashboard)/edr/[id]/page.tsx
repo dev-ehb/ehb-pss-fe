@@ -206,7 +206,7 @@ export default function EdrReviewPage() {
 
   if (isLoading) {
     return (
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         <div className="col-span-2 space-y-4">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-48 w-full" />
@@ -257,7 +257,7 @@ export default function EdrReviewPage() {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left: full detail */}
         <div className="col-span-2 space-y-4">
           {/* Franchise summary if escalated */}

@@ -187,7 +187,7 @@ export default function FranchisePage() {
         <Filter className="h-4 w-4 text-gray-400 shrink-0" />
 
         <Select value={platformFilter} onValueChange={(v) => { setPlatformFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-full sm:w-44">
             <SelectValue placeholder="Platform" />
           </SelectTrigger>
           <SelectContent>
@@ -201,7 +201,7 @@ export default function FranchisePage() {
         </Select>
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>

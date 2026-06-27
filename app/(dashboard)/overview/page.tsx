@@ -34,30 +34,33 @@ function StatCard({
   onRetry?: () => void;
 }) {
   const body = (
-    <Card className="hover:shadow-md transition-shadow cursor-pointer">
-      <CardContent className="p-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <p className="text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-            {isError ? (
-              <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  onRetry?.();
-                }}
-                className="mt-1 inline-flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
-              >
-                <RefreshCw className="h-3.5 w-3.5" /> Retry
-              </button>
-            ) : isLoading ? (
-              <Skeleton className="h-8 w-16 mt-1" />
-            ) : (
-              <p className="text-3xl font-bold text-gray-900 dark:text-gray-100 mt-1">{value}</p>
-            )}
+    <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
+      <CardContent className="p-4 sm:p-6">
+        {/* Title + icon row — icon (tallest element) keeps the number below aligned across cards */}
+        <div className="flex items-start justify-between gap-2">
+          <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
+          <div className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl ${color}`}>
+            <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
-          <div className={`flex h-12 w-12 items-center justify-center rounded-xl ${color}`}>
-            <Icon className="h-6 w-6 text-white" />
-          </div>
+        </div>
+
+        {/* Value / state — its own line so the number bottom-aligns across the grid */}
+        <div className="mt-2 sm:mt-3">
+          {isError ? (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                onRetry?.();
+              }}
+              className="inline-flex items-center gap-1 text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400 dark:hover:text-red-300"
+            >
+              <RefreshCw className="h-3.5 w-3.5" /> Retry
+            </button>
+          ) : isLoading ? (
+            <Skeleton className="h-8 w-16" />
+          ) : (
+            <p className="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-gray-100">{value}</p>
+          )}
         </div>
       </CardContent>
     </Card>
@@ -65,7 +68,11 @@ function StatCard({
 
   // On error the card is not a navigation link — only Retry is interactive.
   if (isError) return body;
-  return <Link href={href}>{body}</Link>;
+  return (
+    <Link href={href} className="block h-full">
+      {body}
+    </Link>
+  );
 }
 
 export default function OverviewPage() {
@@ -114,9 +121,9 @@ export default function OverviewPage() {
     franchiseListData?.data?.reduce((sum, f) => sum + (f.pending_review_count ?? 0), 0) ?? 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 sm:space-y-6">
       {/* Stats grid — each card handles its own error independently */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           title="Pending SQ Requests"
           value={sqData?.total ?? 0}
@@ -163,7 +170,7 @@ export default function OverviewPage() {
       </div>
 
       {/* Recent activity */}
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
         {/* Recent audit activity */}
         <div className="lg:col-span-2">
           <Card>
@@ -188,20 +195,23 @@ export default function OverviewPage() {
               ) : auditData?.data?.length === 0 ? (
                 <p className="text-sm text-gray-400 dark:text-gray-500 py-8 text-center">No recent activity</p>
               ) : (
-                <div className="space-y-3">
-                  {auditData?.data?.slice(0, 10).map((log) => (
+                <div className="space-y-2 sm:space-y-3">
+                  {auditData?.data?.slice(0, 10).map((log, idx) => (
                     <div
                       key={log._id}
-                      className="flex items-start gap-3 rounded-lg p-3 hover:bg-gray-50 dark:hover:bg-gray-800"
+                      className={`${idx >= 5 ? 'hidden sm:flex' : 'flex'} flex-col gap-1 rounded-lg p-2.5 sm:p-3 hover:bg-gray-50 dark:hover:bg-gray-800 sm:flex-row sm:items-start sm:gap-3`}
                     >
-                      <div className="flex-shrink-0 mt-0.5">
+                      {/* Badge sits on top on mobile (saves horizontal space), inline on sm+ */}
+                      <div className="flex-shrink-0 sm:mt-0.5">
                         <AuditActionBadge action={log.action} />
                       </div>
                       <div className="flex-1 min-w-0">
                         <p className="text-xs text-gray-600 dark:text-gray-300 truncate">{log.reason}</p>
-                        <p className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
-                          {log.entity_id} · {log.platform_id} · {formatDate(log.created_at)}
-                        </p>
+                        {/* entity_id truncates (long UUID), but platform + date stay visible */}
+                        <div className="mt-0.5 flex items-center gap-1 text-xs text-gray-400 dark:text-gray-500">
+                          <span className="truncate">{log.entity_id}</span>
+                          <span className="shrink-0">· {log.platform_id} · {formatDate(log.created_at)}</span>
+                        </div>
                       </div>
                     </div>
                   ))}
