@@ -204,7 +204,6 @@ function CriteriaSetCard({
 }) {
   const [expanded, setExpanded] = useState(true);
   const [criteria, setCriteria] = useState<Criterion[]>(criteriaSet.criteria);
-  const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [updateCriteriaSet, { isLoading: saving }] = useUpdateCriteriaSetMutation();
   const [deleteCriteriaSet, { isLoading: deleting }] = useDeleteCriteriaSetMutation();
@@ -212,13 +211,15 @@ function CriteriaSetCard({
   // Sync if server data changes
   useEffect(() => {
     setCriteria(criteriaSet.criteria);
-    setDirty(false);
   }, [criteriaSet]);
+
+  // Derived (not a sticky flag): if the user reverts every change back to the
+  // saved values, this becomes false again and the Save button hides itself.
+  const dirty = JSON.stringify(criteria) !== JSON.stringify(criteriaSet.criteria);
 
   const updateCriterion = (index: number, updated: Criterion) => {
     const next = criteria.map((c, i) => (i === index ? updated : c));
     setCriteria(next);
-    setDirty(true);
   };
 
   const addCriterion = () => {
@@ -235,13 +236,11 @@ function CriteriaSetCard({
       },
     ];
     setCriteria(next);
-    setDirty(true);
   };
 
   const removeCriterion = (index: number) => {
     const next = criteria.filter((_, i) => i !== index);
     setCriteria(next);
-    setDirty(true);
   };
 
   const handleSave = async () => {
@@ -252,7 +251,6 @@ function CriteriaSetCard({
         body: { criteria },
       }).unwrap();
       toast({ title: 'Criteria set saved' });
-      setDirty(false);
     } catch {
       toast({ title: 'Save failed', variant: 'destructive' });
     }
@@ -275,9 +273,38 @@ function CriteriaSetCard({
   return (
     <>
     <Card>
-      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-2">
-        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
-          <CardTitle className="text-base">{criteriaSet.entity_type}</CardTitle>
+      <CardHeader className="space-y-2 pb-2">
+        {/* Top row: title + delete / collapse — these stay at the top always */}
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="truncate text-base">{criteriaSet.entity_type}</CardTitle>
+          <div className="flex shrink-0 items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-red-400 hover:text-red-600"
+              title="Delete this criteria set"
+              onClick={() => setConfirmDelete(true)}
+              disabled={deleting}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={() => setExpanded((e) => !e)}
+            >
+              {expanded ? (
+                <ChevronUp className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Second row: badges, plus the Save button only while there are edits */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
             {criteriaSet.entity_subtype === '*' ? 'base' : criteriaSet.entity_subtype}
           </span>
@@ -293,40 +320,16 @@ function CriteriaSetCard({
           </span>
           <span className="text-xs text-gray-400 dark:text-gray-500">{criteria.length} criteria</span>
           {dirty && (
-            <span className="text-xs text-orange-600 dark:text-orange-400 font-medium bg-orange-50 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">
-              Unsaved changes
-            </span>
+            <>
+              <span className="rounded-full bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
+                Unsaved changes
+              </span>
+              <Button size="sm" className="ml-auto" onClick={handleSave} disabled={saving}>
+                <Save className="h-3.5 w-3.5 mr-1" />
+                {saving ? 'Saving…' : 'Save'}
+              </Button>
+            </>
           )}
-        </div>
-        <div className="flex shrink-0 items-center gap-1">
-          {dirty && (
-            <Button size="sm" onClick={handleSave} disabled={saving}>
-              <Save className="h-3.5 w-3.5 mr-1" />
-              {saving ? 'Saving…' : 'Save'}
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0 text-red-400 hover:text-red-600"
-            title="Delete this criteria set"
-            onClick={() => setConfirmDelete(true)}
-            disabled={deleting}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0"
-            onClick={() => setExpanded((e) => !e)}
-          >
-            {expanded ? (
-              <ChevronUp className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-            )}
-          </Button>
         </div>
       </CardHeader>
 
