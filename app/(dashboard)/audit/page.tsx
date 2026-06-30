@@ -327,6 +327,7 @@ export default function AuditPage() {
           onPaginationChange={setPagination}
           manualPagination
           enableGlobalFilter={false}
+          cardBreakpoint="2xl"
           emptyMessage={
             hasFilters
               ? 'No audit logs match the current filters.'

@@ -35,7 +35,17 @@ interface DataTableProps<TData> {
   enableGlobalFilter?: boolean;
   onRowClick?: (row: TData) => void;
   emptyMessage?: string;
+  /** Below this width the table becomes stacked cards. Default 'xl' (1280px);
+   *  use '2xl' for wide tables (many columns) so they don't cram on laptops. */
+  cardBreakpoint?: 'lg' | 'xl' | '2xl';
 }
+
+// Static class sets (Tailwind can't see dynamically-built class names).
+const BREAKPOINT_CLASSES = {
+  lg: { table: 'hidden overflow-x-auto lg:block', hide: 'lg:hidden' },
+  xl: { table: 'hidden overflow-x-auto xl:block', hide: 'xl:hidden' },
+  '2xl': { table: 'hidden overflow-x-auto 2xl:block', hide: '2xl:hidden' },
+} as const;
 
 export function DataTable<TData>({
   data,
@@ -51,7 +61,9 @@ export function DataTable<TData>({
   enableGlobalFilter = true,
   onRowClick,
   emptyMessage = 'No records found.',
+  cardBreakpoint = 'xl',
 }: DataTableProps<TData>) {
+  const bp = BREAKPOINT_CLASSES[cardBreakpoint];
   const [internalSorting, setInternalSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -124,8 +136,8 @@ export function DataTable<TData>({
         </div>
       )}
 
-      {/* Desktop: classic table (≥xl) */}
-      <div className="hidden overflow-x-auto xl:block">
+      {/* Desktop: classic table (above the card breakpoint) */}
+      <div className={bp.table}>
         <table className="w-full text-sm">
           <thead className="bg-gray-50 dark:bg-gray-800 border-b dark:border-gray-700">
             {table.getHeaderGroups().map((hg) => (
@@ -196,7 +208,7 @@ export function DataTable<TData>({
 
       {/* Mobile sort bar — replaces the clickable column headers that the card view hides */}
       {sortableColumns.length > 0 && rows.length > 0 && (
-        <div className="flex items-center gap-2 border-b dark:border-gray-800 px-4 py-2.5 xl:hidden">
+        <div className={`flex items-center gap-2 border-b dark:border-gray-800 px-4 py-2.5 ${bp.hide}`}>
           <span className="shrink-0 text-xs font-medium text-gray-500 dark:text-gray-400">Sort by</span>
           <Select
             value={activeSort?.id ?? 'none'}
@@ -231,7 +243,7 @@ export function DataTable<TData>({
       )}
 
       {/* Mobile / narrow desktop (<xl): each row as a stacked label/value card (no horizontal scroll) */}
-      <div className="divide-y divide-gray-100 dark:divide-gray-800 xl:hidden">
+      <div className={`divide-y divide-gray-100 dark:divide-gray-800 ${bp.hide}`}>
         {rows.length === 0 ? (
           <div className="py-16 text-center text-sm text-gray-400 dark:text-gray-500">
             {emptyMessage}
