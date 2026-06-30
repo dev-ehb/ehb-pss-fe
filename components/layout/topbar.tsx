@@ -1,7 +1,8 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Bell, RefreshCw, Moon, Sun, LogOut, Menu } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, RefreshCw, Moon, Sun, LogOut, Menu, ChevronDown } from 'lucide-react';
 import { useSession } from 'next-auth/react';
 import { useSignOut } from '@/lib/use-sign-out';
 import { useMobileSidebar } from '@/lib/use-mobile-sidebar';
@@ -40,6 +41,7 @@ export function Topbar() {
   const { data: session } = useSession();
   const { signingOut, signOutNow } = useSignOut();
   const { openSidebar } = useMobileSidebar();
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const handleRefresh = () => {
     // Invalidate every tag so all queries on the current page refetch (not just
@@ -120,12 +122,29 @@ export function Topbar() {
             <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{name}</p>
             <p className="truncate text-xs text-gray-500 dark:text-gray-400">{email}</p>
           </div>
-          {/* Notifications live here on mobile (the bell is hidden < sm) */}
-          <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-800 sm:hidden">
-            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
-              Notifications
-            </p>
-            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">No new notifications</p>
+          {/* Notifications — mobile only (the bell is hidden < sm). Click to reveal;
+              stopPropagation keeps the account dropdown open (panel closes on any inner click). */}
+          <div className="sm:hidden">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setNotifOpen((o) => !o);
+              }}
+              className="flex w-full items-center justify-between gap-2 border-b border-gray-100 px-3 py-2.5 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:text-gray-100 dark:hover:bg-gray-800"
+            >
+              <span className="flex items-center gap-2">
+                <Bell className="h-4 w-4 text-gray-400 dark:text-gray-500" /> Notifications
+              </span>
+              <ChevronDown
+                className={`h-4 w-4 text-gray-400 transition-transform dark:text-gray-500 ${notifOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {notifOpen && (
+              <div className="border-b border-gray-100 px-3 py-3 pl-9 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
+                No new notifications
+              </div>
+            )}
           </div>
           <button
             onClick={signOutNow}
