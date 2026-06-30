@@ -7,7 +7,7 @@ import { useSignOut } from '@/lib/use-sign-out';
 import { useMobileSidebar } from '@/lib/use-mobile-sidebar';
 import { Button } from '@/components/ui/button';
 import { useAppDispatch } from '@/lib/store/hooks';
-import { baseApi } from '@/lib/store/api/base-api';
+import { baseApi, ALL_TAGS } from '@/lib/store/api/base-api';
 import { useTheme } from '@/components/theme/ThemeProvider';
 import { NavDropdown } from '@/components/layout/nav-dropdown';
 
@@ -42,7 +42,9 @@ export function Topbar() {
   const { openSidebar } = useMobileSidebar();
 
   const handleRefresh = () => {
-    dispatch(baseApi.util.invalidateTags(['SqRequest', 'EdrReview', 'Franchise', 'Stats']));
+    // Invalidate every tag so all queries on the current page refetch (not just
+    // a hard-coded subset) — Audit, Platforms, Criteria, Rule Engine, etc. too.
+    dispatch(baseApi.util.invalidateTags([...ALL_TAGS]));
   };
 
   const name = session?.user?.name ?? 'EHB Admin';

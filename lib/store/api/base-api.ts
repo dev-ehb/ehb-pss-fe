@@ -89,24 +89,29 @@ const baseQueryWithReauth: BaseQueryFn<
   return result;
 };
 
+// Every cache tag in this API. Exported so the topbar "Refresh" button can
+// invalidate ALL of them — refetching everything currently on the page — instead
+// of a hard-coded subset.
+export const ALL_TAGS = [
+  'SqRequest',
+  'SqRecord',
+  'EdrReview',
+  'Franchise',
+  'FranchiseReview',
+  'PlatformRule',
+  'CriteriaSet',
+  'Platform',
+  'AuditLog',
+  'WebhookDelivery',
+  'Stats',
+  'VerificationApp',
+  'VerificationRequest',
+  'UserVerification',
+] as const;
+
 export const baseApi = createApi({
   reducerPath: 'pssApi',
   baseQuery: baseQueryWithReauth,
-  tagTypes: [
-    'SqRequest',
-    'SqRecord',
-    'EdrReview',
-    'Franchise',
-    'FranchiseReview',
-    'PlatformRule',
-    'CriteriaSet',
-    'Platform',
-    'AuditLog',
-    'WebhookDelivery',
-    'Stats',
-    'VerificationApp',
-    'VerificationRequest',
-    'UserVerification',
-  ],
+  tagTypes: ALL_TAGS,
   endpoints: () => ({}),
 });
