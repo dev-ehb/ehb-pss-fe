@@ -382,6 +382,7 @@ export default function PlatformsPage() {
           columns={columns}
           isLoading={isLoading}
           emptyMessage="No platforms registered."
+          onRefresh={refetch}
           onRowClick={(row) => router.push(`/platforms/${row.platform_id}`)}
         />
       )}

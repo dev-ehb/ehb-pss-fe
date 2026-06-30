@@ -195,6 +195,8 @@ export default function EdrQueuePage() {
           manualPagination
           enableGlobalFilter={false}
           emptyMessage="No EDR reviews in queue."
+          onRefresh={refetch}
+          isRefreshing={isFetching}
           onRowClick={(row) => router.push(`/edr/${row.sq_request_id}`)}
         />
       )}

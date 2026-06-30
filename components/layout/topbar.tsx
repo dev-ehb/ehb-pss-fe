@@ -88,20 +88,22 @@ export function Topbar() {
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
 
-        {/* Notifications */}
-        <NavDropdown
-          triggerLabel="Notifications"
-          triggerClassName="inline-flex h-10 w-10 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
-          trigger={<Bell className="h-4 w-4" />}
-          panelClassName={panelClass}
-        >
-          <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-800">
-            <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notifications</p>
-          </div>
-          <div className="px-3 py-6 text-center">
-            <p className="text-sm text-gray-500 dark:text-gray-400">No new notifications</p>
-          </div>
-        </NavDropdown>
+        {/* Notifications — desktop only; on mobile it moves into the account menu */}
+        <div className="hidden sm:block">
+          <NavDropdown
+            triggerLabel="Notifications"
+            triggerClassName="inline-flex h-10 w-10 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            trigger={<Bell className="h-4 w-4" />}
+            panelClassName={panelClass}
+          >
+            <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-800">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notifications</p>
+            </div>
+            <div className="px-3 py-6 text-center">
+              <p className="text-sm text-gray-500 dark:text-gray-400">No new notifications</p>
+            </div>
+          </NavDropdown>
+        </div>
 
         {/* Account */}
         <NavDropdown
@@ -117,6 +119,13 @@ export function Topbar() {
           <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-800">
             <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{name}</p>
             <p className="truncate text-xs text-gray-500 dark:text-gray-400">{email}</p>
+          </div>
+          {/* Notifications live here on mobile (the bell is hidden < sm) */}
+          <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-800 sm:hidden">
+            <p className="text-xs font-semibold uppercase tracking-wide text-gray-400 dark:text-gray-500">
+              Notifications
+            </p>
+            <p className="mt-1 text-sm text-gray-500 dark:text-gray-400">No new notifications</p>
           </div>
           <button
             onClick={signOutNow}

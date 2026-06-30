@@ -8,6 +8,7 @@ import { useSearchLogsQuery } from '@/lib/store/api/audit.api';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
+import { RefreshButton } from '@/components/ui/refresh-button';
 import { AuditActionBadge } from '@/components/audit/audit-action-badge';
 import { SqStatusPill } from '@/components/sq/sq-status-pill';
 import { formatDate } from '@/lib/utils';
@@ -79,6 +80,7 @@ export default function OverviewPage() {
   const {
     data: sqData,
     isLoading: sqLoading,
+    isFetching: sqFetching,
     isError: sqErr,
     refetch: sqRefetch,
   } = useGetPendingRequestsQuery({ status: 'pending', page: 1, limit: 1 });
@@ -100,6 +102,7 @@ export default function OverviewPage() {
   const {
     data: platforms,
     isLoading: platformsLoading,
+    isFetching: platformsFetching,
     isError: platformsErr,
     refetch: platformsRefetch,
   } = useGetAllPlatformsQuery();
@@ -107,6 +110,7 @@ export default function OverviewPage() {
   const {
     data: auditData,
     isLoading: auditLoading,
+    isFetching: auditFetching,
     isError: auditErr,
     refetch: auditRefetch,
   } = useSearchLogsQuery({ page: 1, limit: 10 });
@@ -179,9 +183,12 @@ export default function OverviewPage() {
                 <Clock className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                 Recent Audit Activity
               </CardTitle>
-              <Link href="/audit" className="text-xs text-blue-600 hover:underline">
-                View all
-              </Link>
+              <div className="flex items-center gap-1">
+                <RefreshButton onClick={auditRefetch} busy={auditFetching} title="Refresh activity" />
+                <Link href="/audit" className="text-xs text-blue-600 hover:underline">
+                  View all
+                </Link>
+              </div>
             </CardHeader>
             <CardContent>
               {auditErr ? (
@@ -224,11 +231,12 @@ export default function OverviewPage() {
         {/* Quick stats panel */}
         <div className="space-y-4">
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-base font-semibold flex items-center gap-2">
                 <TrendingUp className="h-4 w-4 text-gray-500 dark:text-gray-400" />
                 Active Platforms
               </CardTitle>
+              <RefreshButton onClick={platformsRefetch} busy={platformsFetching} title="Refresh platforms" />
             </CardHeader>
             <CardContent>
               {platformsErr ? (
@@ -272,8 +280,9 @@ export default function OverviewPage() {
           </Card>
 
           <Card>
-            <CardHeader className="pb-2">
+            <CardHeader className="flex flex-row items-center justify-between pb-2">
               <CardTitle className="text-base font-semibold">Recent SQ Requests</CardTitle>
+              <RefreshButton onClick={sqRefetch} busy={sqFetching} title="Refresh requests" />
             </CardHeader>
             <CardContent>
               {sqErr ? (

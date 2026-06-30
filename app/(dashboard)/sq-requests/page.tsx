@@ -178,6 +178,8 @@ export default function SqRequestsPage() {
           manualPagination
           enableGlobalFilter={false}
           emptyMessage="No SQ requests found."
+          onRefresh={refetch}
+          isRefreshing={isFetching}
           onRowClick={(row) => router.push(`/sq-requests/${row.sq_request_id}`)}
         />
       )}

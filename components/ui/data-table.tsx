@@ -19,6 +19,7 @@ import { Button } from './button';
 import { Input } from './input';
 import { Skeleton } from './skeleton';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './select';
+import { RefreshButton } from './refresh-button';
 import { ChevronUp, ChevronDown, ChevronsUpDown } from 'lucide-react';
 
 interface DataTableProps<TData> {
@@ -38,6 +39,9 @@ interface DataTableProps<TData> {
   /** Below this width the table becomes stacked cards. Default 'xl' (1280px);
    *  use '2xl' for wide tables (many columns) so they don't cram on laptops. */
   cardBreakpoint?: 'lg' | 'xl' | '2xl';
+  /** Pass the query's refetch to show a per-table refresh button in the footer. */
+  onRefresh?: () => void;
+  isRefreshing?: boolean;
 }
 
 // Static class sets (Tailwind can't see dynamically-built class names).
@@ -62,6 +66,8 @@ export function DataTable<TData>({
   onRowClick,
   emptyMessage = 'No records found.',
   cardBreakpoint = 'xl',
+  onRefresh,
+  isRefreshing,
 }: DataTableProps<TData>) {
   const bp = BREAKPOINT_CLASSES[cardBreakpoint];
   const [internalSorting, setInternalSorting] = useState<SortingState>([]);
@@ -285,11 +291,16 @@ export function DataTable<TData>({
 
       {/* Pagination footer */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t dark:border-gray-800 px-4 py-3 bg-gray-50 dark:bg-gray-800">
-        <p className="text-sm text-gray-500 dark:text-gray-400">
-          {totalDisplayed > 0
-            ? `Page ${currentPage} of ${Math.max(pageCount, 1)} · ${totalDisplayed} total`
-            : 'No results'}
-        </p>
+        <div className="flex items-center gap-2">
+          {onRefresh && (
+            <RefreshButton onClick={onRefresh} busy={isRefreshing} title="Refresh table" />
+          )}
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            {totalDisplayed > 0
+              ? `Page ${currentPage} of ${Math.max(pageCount, 1)} · ${totalDisplayed} total`
+              : 'No results'}
+          </p>
+        </div>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
