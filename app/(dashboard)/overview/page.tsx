@@ -24,7 +24,6 @@ function StatCard({
   isLoading,
   isError,
   onRetry,
-  busy,
 }: {
   title: string;
   value: number | string;
@@ -34,7 +33,6 @@ function StatCard({
   isLoading?: boolean;
   isError?: boolean;
   onRetry?: () => void;
-  busy?: boolean;
 }) {
   const body = (
     <Card className="h-full hover:shadow-md transition-shadow cursor-pointer">
@@ -42,11 +40,8 @@ function StatCard({
         {/* Title + icon row — icon (tallest element) keeps the number below aligned across cards */}
         <div className="flex items-start justify-between gap-2">
           <p className="text-xs sm:text-sm font-medium text-gray-500 dark:text-gray-400">{title}</p>
-          <div className="flex items-center gap-1">
-            {onRetry && <RefreshButton onClick={onRetry} busy={busy} title={`Refresh ${title}`} />}
-            <div className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl ${color}`}>
-              <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
-            </div>
+          <div className={`flex h-10 w-10 sm:h-12 sm:w-12 shrink-0 items-center justify-center rounded-xl ${color}`}>
+            <Icon className="h-5 w-5 sm:h-6 sm:w-6 text-white" />
           </div>
         </div>
 
@@ -93,7 +88,6 @@ export default function OverviewPage() {
   const {
     data: edrData,
     isLoading: edrLoading,
-    isFetching: edrFetching,
     isError: edrErr,
     refetch: edrRefetch,
   } = useGetEdrQueueQuery({ status: 'pending', page: 1, limit: 1 });
@@ -101,7 +95,6 @@ export default function OverviewPage() {
   const {
     data: franchiseData,
     isLoading: franchiseLoading,
-    isFetching: franchiseFetching,
     isError: franchiseErr,
     refetch: franchiseRefetch,
   } = useGetAllFranchisesQuery({ page: 1, limit: 1 });
@@ -144,7 +137,6 @@ export default function OverviewPage() {
           isLoading={sqLoading}
           isError={sqErr}
           onRetry={sqRefetch}
-          busy={sqFetching}
         />
         <StatCard
           title="Pending EDR Reviews"
@@ -155,7 +147,6 @@ export default function OverviewPage() {
           isLoading={edrLoading}
           isError={edrErr}
           onRetry={edrRefetch}
-          busy={edrFetching}
         />
         <StatCard
           title="Pending Franchise Reviews"
@@ -169,7 +160,6 @@ export default function OverviewPage() {
             franchiseRefetch();
             franchiseListRefetch();
           }}
-          busy={franchiseFetching}
         />
         <StatCard
           title="Registered Platforms"
@@ -180,7 +170,6 @@ export default function OverviewPage() {
           isLoading={platformsLoading}
           isError={platformsErr}
           onRetry={platformsRefetch}
-          busy={platformsFetching}
         />
       </div>
 
