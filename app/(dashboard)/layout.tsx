@@ -4,6 +4,7 @@ import { OfflineBanner } from '@/components/ui/offline-banner';
 import { WelcomeToast } from '@/components/layout/welcome-toast';
 import { Breadcrumb } from '@/components/layout/breadcrumb';
 import { NavigationLoader } from '@/components/layout/navigation-loader';
+import { AuthGate } from '@/components/auth/AuthGate';
 
 export default function DashboardLayout({
   children,
@@ -11,6 +12,7 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
+    <AuthGate>
     <div className="flex h-screen flex-col overflow-hidden bg-gray-50 dark:bg-gray-950">
       {/* Full-width offline banner - spans above sidebar + content */}
       <OfflineBanner />
@@ -35,5 +37,6 @@ export default function DashboardLayout({
         </div>
       </div>
     </div>
+    </AuthGate>
   );
 }

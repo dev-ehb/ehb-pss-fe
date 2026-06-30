@@ -53,7 +53,12 @@ const baseQueryWithReauth: BaseQueryFn<
   if (result.error) {
     const status = result.error.status;
     if (status === 401) {
-      if (allowOnce('401')) {
+      // A single endpoint returning 401 does NOT prove the session is dead - it
+      // can be a broken/unimplemented endpoint (e.g. /webhooks/*). Only sign the
+      // user out if the next-auth session is actually gone; otherwise this 401
+      // is endpoint-specific and the page handles it.
+      const session = await getSession();
+      if (!session && allowOnce('401')) {
         toast({
           title: 'Session expired',
           description: 'Please log in again.',

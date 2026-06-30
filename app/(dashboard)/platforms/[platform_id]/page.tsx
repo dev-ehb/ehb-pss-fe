@@ -1,5 +1,6 @@
 'use client';
 
+import { VerifyGate } from '@/components/auth/VerifyGate';
 import { useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -134,7 +135,7 @@ function DeliveryRow({ delivery }: { delivery: WebhookDelivery }) {
 
 // ── Main page ─────────────────────────────────────────────────────────────────
 
-export default function PlatformDetailPage() {
+function PlatformDetailContent() {
   const { platform_id } = useParams<{ platform_id: string }>();
   const router = useRouter();
 
@@ -540,5 +541,15 @@ export default function PlatformDetailPage() {
         </AlertDialogContent>
       </AlertDialog>
     </div>
+  );
+}
+
+// Sensitive page (API key / webhook secrets): re-verify the session on every
+// visit and keep it hidden until verification resolves.
+export default function PlatformDetailPage() {
+  return (
+    <VerifyGate>
+      <PlatformDetailContent />
+    </VerifyGate>
   );
 }

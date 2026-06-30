@@ -1,5 +1,6 @@
 'use client';
 
+import { VerifyGate } from '@/components/auth/VerifyGate';
 import { useState } from 'react';
 import {
   useGetUserVaultQuery,
@@ -20,7 +21,7 @@ const STATUS_STYLES: Record<string, string> = {
   revoked: 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
 };
 
-export default function VaultPage() {
+function VaultContent() {
   const [input, setInput] = useState('');
   const [userId, setUserId] = useState('');
   const { data: vault, isFetching, isError, refetch } = useGetUserVaultQuery(userId, { skip: !userId });
@@ -94,5 +95,14 @@ export default function VaultPage() {
         )
       )}
     </div>
+  );
+}
+
+// Sensitive page (verification credentials / revoke): verify session each visit.
+export default function VaultPage() {
+  return (
+    <VerifyGate>
+      <VaultContent />
+    </VerifyGate>
   );
 }
