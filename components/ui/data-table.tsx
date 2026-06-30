@@ -131,14 +131,21 @@ export function DataTable<TData>({
 
   return (
     <div className="w-full rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm overflow-hidden">
-      {enableGlobalFilter && (
-        <div className="p-4 border-b dark:border-gray-800">
-          <Input
-            placeholder="Search..."
-            value={globalFilter}
-            onChange={(e) => setGlobalFilter(e.target.value)}
-            className="max-w-sm"
-          />
+      {(enableGlobalFilter || onRefresh) && (
+        <div className="flex items-center justify-between gap-2 border-b dark:border-gray-800 p-3">
+          {enableGlobalFilter ? (
+            <Input
+              placeholder="Search..."
+              value={globalFilter}
+              onChange={(e) => setGlobalFilter(e.target.value)}
+              className="max-w-sm"
+            />
+          ) : (
+            <span />
+          )}
+          {onRefresh && (
+            <RefreshButton onClick={onRefresh} busy={isRefreshing} title="Refresh table" />
+          )}
         </div>
       )}
 
@@ -291,16 +298,11 @@ export function DataTable<TData>({
 
       {/* Pagination footer */}
       <div className="flex flex-wrap items-center justify-between gap-2 border-t dark:border-gray-800 px-4 py-3 bg-gray-50 dark:bg-gray-800">
-        <div className="flex items-center gap-2">
-          {onRefresh && (
-            <RefreshButton onClick={onRefresh} busy={isRefreshing} title="Refresh table" />
-          )}
-          <p className="text-sm text-gray-500 dark:text-gray-400">
-            {totalDisplayed > 0
-              ? `Page ${currentPage} of ${Math.max(pageCount, 1)} · ${totalDisplayed} total`
-              : 'No results'}
-          </p>
-        </div>
+        <p className="text-sm text-gray-500 dark:text-gray-400">
+          {totalDisplayed > 0
+            ? `Page ${currentPage} of ${Math.max(pageCount, 1)} · ${totalDisplayed} total`
+            : 'No results'}
+        </p>
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
