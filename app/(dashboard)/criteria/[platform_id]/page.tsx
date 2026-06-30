@@ -275,8 +275,8 @@ function CriteriaSetCard({
   return (
     <>
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div className="flex items-center gap-3">
+      <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 pb-2">
+        <div className="flex min-w-0 flex-wrap items-center gap-x-2 gap-y-1">
           <CardTitle className="text-base">{criteriaSet.entity_type}</CardTitle>
           <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
             {criteriaSet.entity_subtype === '*' ? 'base' : criteriaSet.entity_subtype}
@@ -298,7 +298,7 @@ function CriteriaSetCard({
             </span>
           )}
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex shrink-0 items-center gap-1">
           {dirty && (
             <Button size="sm" onClick={handleSave} disabled={saving}>
               <Save className="h-3.5 w-3.5 mr-1" />
