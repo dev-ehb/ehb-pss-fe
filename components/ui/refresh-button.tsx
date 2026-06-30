@@ -22,7 +22,12 @@ export function RefreshButton({
   return (
     <button
       type="button"
-      onClick={onClick}
+      onClick={(e) => {
+        // Don't trigger a parent <Link>/row click when nested inside one.
+        e.preventDefault();
+        e.stopPropagation();
+        onClick();
+      }}
       disabled={busy}
       title={title}
       aria-label={title}

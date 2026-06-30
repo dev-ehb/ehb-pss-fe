@@ -24,6 +24,7 @@ import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
+import { RefreshButton } from '@/components/ui/refresh-button';
 import {
   Select,
   SelectContent,
@@ -507,7 +508,7 @@ export default function CriteriaPage() {
   const [addingNew, setAddingNew] = useState(false);
 
   const { data: platforms, isError: platformsError, refetch: platformsRefetch } = useGetAllPlatformsQuery();
-  const { data: criteriaSets, isLoading, isError, refetch } = useGetCriteriaByPlatformQuery(
+  const { data: criteriaSets, isLoading, isFetching, isError, refetch } = useGetCriteriaByPlatformQuery(
     { platform_id: selectedPlatform },
     { skip: !selectedPlatform },
   );
@@ -529,6 +530,9 @@ export default function CriteriaPage() {
       {/* Platform + entity type selector */}
       <div className="flex flex-wrap items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
         <ListChecks className="h-4 w-4 text-indigo-500 shrink-0" />
+        {selectedPlatform && (
+          <RefreshButton onClick={refetch} busy={isFetching} title="Refresh criteria" />
+        )}
         {platformsError ? (
           <button
             type="button"

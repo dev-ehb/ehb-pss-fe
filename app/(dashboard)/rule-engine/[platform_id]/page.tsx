@@ -17,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RefreshButton } from '@/components/ui/refresh-button';
 import {
   Select,
   SelectContent,
@@ -592,6 +593,7 @@ export default function RuleEnginePage() {
   const {
     data: rules,
     isLoading,
+    isFetching,
     isError,
     refetch,
   } = useGetRulesByPlatformQuery(selectedPlatform, {
@@ -626,6 +628,9 @@ export default function RuleEnginePage() {
       {/* Platform selector header */}
       <div className="flex flex-wrap items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
         <Zap className="h-4 w-4 text-yellow-500 shrink-0" />
+        {selectedPlatform && (
+          <RefreshButton onClick={refetch} busy={isFetching} title="Refresh rules" />
+        )}
         <Select value={selectedPlatform} onValueChange={handlePlatformChange}>
           <SelectTrigger className="w-full sm:w-56">
             <SelectValue placeholder="Select platform" />

@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { RefreshButton } from '@/components/ui/refresh-button';
 import { ErrorState } from '@/components/ui/error-state';
 import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
@@ -88,7 +89,7 @@ function NewAppForm({ onClose }: { onClose: () => void }) {
 }
 
 export default function VerificationAppsPage() {
-  const { data: apps, isLoading, isError, refetch } = useGetVerificationAppsQuery();
+  const { data: apps, isLoading, isFetching, isError, refetch } = useGetVerificationAppsQuery();
   const [updateApp] = useUpdateVerificationAppMutation();
   const [addingNew, setAddingNew] = useState(false);
 
@@ -106,6 +107,7 @@ export default function VerificationAppsPage() {
       <div className="flex flex-wrap items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
         <ShieldCheck className="h-4 w-4 text-indigo-500 shrink-0" />
         <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Verification Apps</h1>
+        <RefreshButton onClick={refetch} busy={isFetching} title="Refresh apps" />
         <Link
           href="/verification-apps/review"
           className="ml-auto inline-flex items-center gap-1.5 rounded-md border border-gray-200 dark:border-gray-700 px-3 py-1.5 text-sm font-medium text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800"
