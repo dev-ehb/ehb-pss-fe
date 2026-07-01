@@ -9,7 +9,7 @@ import { ThemeProvider } from '@/components/theme/ThemeProvider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'PSS Admin — EHB Platform Support Services',
+  title: 'PSS Admin — EHB Personal Security Services',
   description: 'PSS Admin Dashboard — SQ verification engine control panel',
 };
 
@@ -21,6 +21,13 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
+        {/* Apply the saved theme BEFORE paint so a dark-mode refresh never
+            flashes light first (runs synchronously, before React hydrates). */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){try{var t=localStorage.getItem('pss-theme');var d=t?t==='dark':window.matchMedia('(prefers-color-scheme: dark)').matches;if(d)document.documentElement.classList.add('dark');}catch(e){}})();`,
+          }}
+        />
         <ThemeProvider>
           <AuthProvider>
             <StoreProvider>

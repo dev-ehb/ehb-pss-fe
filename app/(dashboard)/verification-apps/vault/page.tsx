@@ -1,5 +1,6 @@
 'use client';
 
+import { VerifyGate } from '@/components/auth/VerifyGate';
 import { useState } from 'react';
 import {
   useGetUserVaultQuery,
@@ -8,6 +9,7 @@ import {
 import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
+import { ErrorState } from '@/components/ui/error-state';
 import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 import { Vault as VaultIcon, Search, Ban } from 'lucide-react';
@@ -19,10 +21,10 @@ const STATUS_STYLES: Record<string, string> = {
   revoked: 'bg-gray-200 text-gray-600 dark:bg-gray-700 dark:text-gray-300',
 };
 
-export default function VaultPage() {
+function VaultContent() {
   const [input, setInput] = useState('');
   const [userId, setUserId] = useState('');
-  const { data: vault, isFetching } = useGetUserVaultQuery(userId, { skip: !userId });
+  const { data: vault, isFetching, isError, refetch } = useGetUserVaultQuery(userId, { skip: !userId });
   const [revoke] = useRevokeVaultMutation();
 
   const onRevoke = async (appId: string) => {
@@ -36,7 +38,7 @@ export default function VaultPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
         <VaultIcon className="h-4 w-4 text-indigo-500 shrink-0" />
         <h1 className="text-sm font-semibold text-gray-800 dark:text-gray-100">Verification Vault</h1>
       </div>
@@ -60,7 +62,9 @@ export default function VaultPage() {
       </Card>
 
       {userId && (
-        isFetching ? (
+        isError ? (
+          <ErrorState onRetry={refetch} />
+        ) : isFetching ? (
           <p className="text-sm text-gray-400 px-1">Loading…</p>
         ) : !vault || vault.length === 0 ? (
           <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 py-16 text-center">
@@ -91,5 +95,14 @@ export default function VaultPage() {
         )
       )}
     </div>
+  );
+}
+
+// Sensitive page (verification credentials / revoke): verify session each visit.
+export default function VaultPage() {
+  return (
+    <VerifyGate>
+      <VaultContent />
+    </VerifyGate>
   );
 }

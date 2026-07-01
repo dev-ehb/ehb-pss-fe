@@ -6,6 +6,7 @@ import { useGetAllFranchisesQuery } from '@/lib/store/api/franchise.api';
 import { useGetAllPlatformsQuery } from '@/lib/store/api/platforms.api';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Button } from '@/components/ui/button';
+import { ErrorState } from '@/components/ui/error-state';
 import {
   Select,
   SelectContent,
@@ -161,7 +162,7 @@ export default function FranchisePage() {
   const [page, setPage] = useState(1);
   const PAGE_SIZE = 24;
 
-  const { data, isLoading } = useGetAllFranchisesQuery({
+  const { data, isLoading, isError, refetch } = useGetAllFranchisesQuery({
     platform_id: platformFilter === 'all' ? undefined : platformFilter,
     page,
     limit: PAGE_SIZE,
@@ -186,7 +187,7 @@ export default function FranchisePage() {
         <Filter className="h-4 w-4 text-gray-400 shrink-0" />
 
         <Select value={platformFilter} onValueChange={(v) => { setPlatformFilter(v); setPage(1); }}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-full sm:w-44">
             <SelectValue placeholder="Platform" />
           </SelectTrigger>
           <SelectContent>
@@ -200,7 +201,7 @@ export default function FranchisePage() {
         </Select>
 
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-40">
+          <SelectTrigger className="w-full sm:w-40">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -225,7 +226,9 @@ export default function FranchisePage() {
       </div>
 
       {/* Grid */}
-      {isLoading ? (
+      {isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : isLoading ? (
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {Array.from({ length: 8 }).map((_, i) => (
             <SkeletonCard key={i} />

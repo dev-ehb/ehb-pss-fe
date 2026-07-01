@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { type ColumnDef, type PaginationState } from '@tanstack/react-table';
 import { useSearchLogsQuery } from '@/lib/store/api/audit.api';
 import { useGetAllPlatformsQuery } from '@/lib/store/api/platforms.api';
 import { DataTable } from '@/components/ui/data-table';
 import { AuditActionBadge } from '@/components/audit/audit-action-badge';
 import { Button } from '@/components/ui/button';
+import { ErrorState } from '@/components/ui/error-state';
 import {
   Select,
   SelectContent,
@@ -76,7 +77,7 @@ const columns: ColumnDef<AuditLog, unknown>[] = [
           <summary className="cursor-pointer text-blue-500 hover:text-blue-700 select-none">
             View
           </summary>
-          <pre className="absolute z-10 mt-1 max-w-xs rounded-lg bg-gray-900 p-2 text-xs text-green-400 overflow-auto max-h-40 shadow-lg">
+          <pre className="static mt-1 max-h-40 w-full max-w-full overflow-auto whitespace-pre-wrap break-all rounded-lg bg-gray-900 p-2 text-xs text-green-400 shadow-lg lg:absolute lg:z-10 lg:max-w-xs lg:whitespace-pre lg:break-normal">
             {JSON.stringify(row.original.metadata, null, 2)}
           </pre>
         </details>
@@ -137,13 +138,20 @@ export default function AuditPage() {
     pageSize: 50,
   });
 
+  // Smaller default page size on mobile (less scrolling); user can raise it below.
+  useEffect(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      setPagination((p) => ({ ...p, pageSize: 5 }));
+    }
+  }, []);
+
   const [actionFilter, setActionFilter] = useState<string>('all');
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [performedBy, setPerformedBy] = useState<string>('');
   const [fromDate, setFromDate] = useState<string>('');
   const [toDate, setToDate] = useState<string>('');
 
-  const { data, isLoading, isFetching } = useSearchLogsQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useSearchLogsQuery({
     action: actionFilter === 'all' ? undefined : actionFilter,
     platform_id: platformFilter === 'all' ? undefined : platformFilter,
     performed_by: performedBy || undefined,
@@ -197,7 +205,7 @@ export default function AuditPage() {
             value={actionFilter}
             onValueChange={(v) => { setActionFilter(v); setPagination((p) => ({ ...p, pageIndex: 0 })); }}
           >
-            <SelectTrigger className="w-52">
+            <SelectTrigger className="w-full sm:w-52">
               <SelectValue placeholder="All Actions" />
             </SelectTrigger>
             <SelectContent className="max-h-72">
@@ -215,7 +223,7 @@ export default function AuditPage() {
             value={platformFilter}
             onValueChange={(v) => { setPlatformFilter(v); setPagination((p) => ({ ...p, pageIndex: 0 })); }}
           >
-            <SelectTrigger className="w-44">
+            <SelectTrigger className="w-full sm:w-44">
               <SelectValue placeholder="All Platforms" />
             </SelectTrigger>
             <SelectContent>
@@ -229,11 +237,11 @@ export default function AuditPage() {
           </Select>
 
           {/* Performed by */}
-          <div className="relative">
+          <div className="relative w-full sm:w-auto">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-gray-400" />
             <input
               type="text"
-              className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 pl-8 pr-3 py-2 text-sm w-44 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 pl-8 pr-3 py-2 text-sm focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:w-44"
               placeholder="Performed by…"
               value={performedBy}
               onChange={(e) => setPerformedBy(e.target.value)}
@@ -241,18 +249,20 @@ export default function AuditPage() {
           </div>
 
           {/* Date range */}
-          <div className="flex items-center gap-2">
+          <div className="flex w-full flex-col gap-2 sm:w-auto sm:flex-row sm:items-center">
             <input
               type="date"
-              className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              max="2100-12-31"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none sm:w-auto"
               value={fromDate}
               onChange={(e) => setFromDate(e.target.value)}
               title="From date"
             />
-            <span className="text-gray-400 text-sm">→</span>
+            <span className="hidden text-gray-400 text-sm sm:inline">→</span>
             <input
               type="date"
-              className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none"
+              max="2100-12-31"
+              className="w-full rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 px-3 py-2 text-sm focus:border-blue-500 focus:outline-none sm:w-auto"
               value={toDate}
               onChange={(e) => setToDate(e.target.value)}
               title="To date"
@@ -264,7 +274,7 @@ export default function AuditPage() {
             <Button
               variant="outline"
               size="sm"
-              className="ml-auto"
+              className="w-full sm:ml-auto sm:w-auto"
               onClick={() => exportToCsv(data.data)}
             >
               <Download className="h-3.5 w-3.5 mr-1.5" />
@@ -273,35 +283,60 @@ export default function AuditPage() {
           )}
         </div>
 
-        {/* Result count */}
-        {!isLoading && (
-          <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+        {/* Result count + page size */}
+        <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
+          {!isLoading && (
             <span>
               {data?.total ?? 0} log{(data?.total ?? 0) !== 1 ? 's' : ''} found
             </span>
-            {isFetching && (
-              <span className="text-blue-400">Refreshing…</span>
-            )}
+          )}
+          {isFetching && <span className="text-blue-400">Refreshing…</span>}
+          <div className="ml-auto flex items-center gap-1.5">
+            <span>Per page</span>
+            <Select
+              value={String(pagination.pageSize)}
+              onValueChange={(v) =>
+                setPagination((p) => ({ ...p, pageIndex: 0, pageSize: Number(v) }))
+              }
+            >
+              <SelectTrigger className="h-auto w-auto gap-1 px-2 py-1 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {[5, 10, 25, 50, 100].map((n) => (
+                  <SelectItem key={n} value={String(n)} className="text-xs">
+                    {n}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
           </div>
-        )}
+        </div>
       </div>
 
       {/* Table */}
-      <DataTable
-        data={data?.data ?? []}
-        columns={columns}
-        isLoading={isLoading || isFetching}
-        totalRows={data?.total}
-        pagination={pagination}
-        onPaginationChange={setPagination}
-        manualPagination
-        enableGlobalFilter={false}
-        emptyMessage={
-          hasFilters
-            ? 'No audit logs match the current filters.'
-            : 'No audit logs recorded yet.'
-        }
-      />
+      {isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : (
+        <DataTable
+          data={data?.data ?? []}
+          columns={columns}
+          isLoading={isLoading || isFetching}
+          totalRows={data?.total}
+          pagination={pagination}
+          onPaginationChange={setPagination}
+          manualPagination
+          enableGlobalFilter={false}
+          cardBreakpoint="2xl"
+          onRefresh={refetch}
+          isRefreshing={isFetching}
+          emptyMessage={
+            hasFilters
+              ? 'No audit logs match the current filters.'
+              : 'No audit logs recorded yet.'
+          }
+        />
+      )}
     </div>
   );
 }

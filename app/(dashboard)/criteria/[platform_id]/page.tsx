@@ -23,6 +23,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/error-state';
+import { RefreshButton } from '@/components/ui/refresh-button';
 import {
   Select,
   SelectContent,
@@ -34,7 +36,7 @@ import { toast } from '@/components/ui/toast';
 import { cn } from '@/lib/utils';
 import type { CriteriaSet, Criterion, CheckType, SqLevel } from '@/types/pss.types';
 import { SQ_LEVELS } from '@/types/pss.types';
-import { Plus, Trash2, Save, ListChecks, ChevronDown, ChevronUp } from 'lucide-react';
+import { Plus, Trash2, Save, ListChecks, ChevronDown, ChevronUp, RefreshCw } from 'lucide-react';
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -67,15 +69,15 @@ function CriterionRow({
   const needsValue = criterion.check_type !== 'presence' && !isVerificationApp;
 
   return (
-    <div className="grid grid-cols-12 gap-2 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3 items-start">
+    <div className="grid grid-cols-2 gap-x-2 gap-y-2 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 p-3 lg:grid-cols-12 lg:items-start">
       {/* Index */}
-      <div className="col-span-1 flex items-center justify-center pt-2">
-        <span className="text-xs font-bold text-gray-400 dark:text-gray-500">{index + 1}</span>
+      <div className="col-span-2 flex items-center justify-start lg:col-span-1 lg:justify-center lg:pt-2">
+        <span className="text-xs font-bold text-gray-400 dark:text-gray-500">#{index + 1}</span>
       </div>
 
       {/* Label */}
-      <div className="col-span-3 space-y-1">
-        <Label className="text-xs">Label</Label>
+      <div className="col-span-1 space-y-1 lg:col-span-3">
+        <Label className="text-xs lg:hidden">Label</Label>
         <input
           className="w-full rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none"
           placeholder="e.g. Verified email"
@@ -85,8 +87,8 @@ function CriterionRow({
       </div>
 
       {/* Field key */}
-      <div className="col-span-2 space-y-1">
-        <Label className="text-xs">{isVerificationApp ? 'App ID' : 'Field Key'}</Label>
+      <div className="col-span-1 space-y-1 lg:col-span-2">
+        <Label className="text-xs lg:hidden">{isVerificationApp ? 'App ID' : 'Field Key'}</Label>
         <input
           className="w-full rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs font-mono focus:border-blue-500 focus:outline-none"
           placeholder={isVerificationApp ? 'facial' : 'entity_data.email'}
@@ -101,29 +103,33 @@ function CriterionRow({
 
       {/* Check type */}
       <div className="col-span-2 space-y-1">
-        <Label className="text-xs">Check Type</Label>
-        <select
-          className="w-full rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none"
+        <Label className="text-xs lg:hidden">Check Type</Label>
+        <Select
           value={criterion.check_type}
-          onChange={(e) =>
+          onValueChange={(v) =>
             onChange({
               ...criterion,
-              check_type: e.target.value as CheckType,
-              check_value: e.target.value === 'presence' ? null : criterion.check_value,
+              check_type: v as CheckType,
+              check_value: v === 'presence' ? null : criterion.check_value,
             })
           }
         >
-          {CHECK_TYPES.map((ct) => (
-            <option key={ct.value} value={ct.value}>
-              {ct.label}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="h-auto px-2 py-1.5 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {CHECK_TYPES.map((ct) => (
+              <SelectItem key={ct.value} value={ct.value} className="text-xs">
+                {ct.label}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Check value */}
-      <div className="col-span-1 space-y-1">
-        <Label className="text-xs">Value</Label>
+      <div className="col-span-1 space-y-1 lg:col-span-1">
+        <Label className="text-xs lg:hidden">Value</Label>
         <input
           className="w-full rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none disabled:opacity-40"
           placeholder={
@@ -142,23 +148,27 @@ function CriterionRow({
       </div>
 
       {/* SQ Min */}
-      <div className="col-span-1 space-y-1">
-        <Label className="text-xs">SQ Min</Label>
-        <select
-          className="w-full rounded border border-gray-200 dark:border-gray-600 bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 px-2 py-1.5 text-xs focus:border-blue-500 focus:outline-none"
-          value={criterion.sq_min}
-          onChange={(e) => onChange({ ...criterion, sq_min: Number(e.target.value) as SqLevel })}
+      <div className="col-span-1 space-y-1 lg:col-span-1">
+        <Label className="text-xs lg:hidden">SQ Min</Label>
+        <Select
+          value={String(criterion.sq_min)}
+          onValueChange={(v) => onChange({ ...criterion, sq_min: Number(v) as SqLevel })}
         >
-          {SQ_LEVELS.map((lvl) => (
-            <option key={lvl} value={lvl}>
-              SQ{lvl}
-            </option>
-          ))}
-        </select>
+          <SelectTrigger className="h-auto px-2 py-1.5 text-xs">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            {SQ_LEVELS.map((lvl) => (
+              <SelectItem key={lvl} value={String(lvl)} className="text-xs">
+                SQ{lvl}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Required */}
-      <div className="col-span-1 space-y-1 flex flex-col items-center">
+      <div className="col-span-1 flex flex-col items-start space-y-1 lg:col-span-1 lg:items-center">
         <Label className="text-xs">Required</Label>
         <input
           type="checkbox"
@@ -169,7 +179,7 @@ function CriterionRow({
       </div>
 
       {/* Remove */}
-      <div className="col-span-1 flex items-end pb-0.5">
+      <div className="col-span-1 flex items-center justify-end lg:col-span-1 lg:items-end lg:pb-0.5">
         <Button
           variant="ghost"
           size="sm"
@@ -195,7 +205,6 @@ function CriteriaSetCard({
 }) {
   const [expanded, setExpanded] = useState(true);
   const [criteria, setCriteria] = useState<Criterion[]>(criteriaSet.criteria);
-  const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [updateCriteriaSet, { isLoading: saving }] = useUpdateCriteriaSetMutation();
   const [deleteCriteriaSet, { isLoading: deleting }] = useDeleteCriteriaSetMutation();
@@ -203,13 +212,15 @@ function CriteriaSetCard({
   // Sync if server data changes
   useEffect(() => {
     setCriteria(criteriaSet.criteria);
-    setDirty(false);
   }, [criteriaSet]);
+
+  // Derived (not a sticky flag): if the user reverts every change back to the
+  // saved values, this becomes false again and the Save button hides itself.
+  const dirty = JSON.stringify(criteria) !== JSON.stringify(criteriaSet.criteria);
 
   const updateCriterion = (index: number, updated: Criterion) => {
     const next = criteria.map((c, i) => (i === index ? updated : c));
     setCriteria(next);
-    setDirty(true);
   };
 
   const addCriterion = () => {
@@ -226,13 +237,11 @@ function CriteriaSetCard({
       },
     ];
     setCriteria(next);
-    setDirty(true);
   };
 
   const removeCriterion = (index: number) => {
     const next = criteria.filter((_, i) => i !== index);
     setCriteria(next);
-    setDirty(true);
   };
 
   const handleSave = async () => {
@@ -243,7 +252,6 @@ function CriteriaSetCard({
         body: { criteria },
       }).unwrap();
       toast({ title: 'Criteria set saved' });
-      setDirty(false);
     } catch {
       toast({ title: 'Save failed', variant: 'destructive' });
     }
@@ -266,9 +274,38 @@ function CriteriaSetCard({
   return (
     <>
     <Card>
-      <CardHeader className="flex flex-row items-center justify-between pb-2">
-        <div className="flex items-center gap-3">
-          <CardTitle className="text-base">{criteriaSet.entity_type}</CardTitle>
+      <CardHeader className="space-y-2 pb-2">
+        {/* Top row: title + delete / collapse — these stay at the top always */}
+        <div className="flex items-center justify-between gap-2">
+          <CardTitle className="truncate text-base">{criteriaSet.entity_type}</CardTitle>
+          <div className="flex shrink-0 items-center gap-1">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0 text-red-400 hover:text-red-600"
+              title="Delete this criteria set"
+              onClick={() => setConfirmDelete(true)}
+              disabled={deleting}
+            >
+              <Trash2 className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="sm"
+              className="h-7 w-7 p-0"
+              onClick={() => setExpanded((e) => !e)}
+            >
+              {expanded ? (
+                <ChevronUp className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              ) : (
+                <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
+              )}
+            </Button>
+          </div>
+        </div>
+
+        {/* Second row: badges, plus the Save button only while there are edits */}
+        <div className="flex flex-wrap items-center gap-x-2 gap-y-1.5">
           <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
             {criteriaSet.entity_subtype === '*' ? 'base' : criteriaSet.entity_subtype}
           </span>
@@ -284,39 +321,16 @@ function CriteriaSetCard({
           </span>
           <span className="text-xs text-gray-400 dark:text-gray-500">{criteria.length} criteria</span>
           {dirty && (
-            <span className="text-xs text-orange-600 dark:text-orange-400 font-medium bg-orange-50 dark:bg-orange-900/30 px-2 py-0.5 rounded-full">
-              Unsaved changes
-            </span>
+            <>
+              <span className="rounded-full bg-orange-50 px-2 py-0.5 text-xs font-medium text-orange-600 dark:bg-orange-900/30 dark:text-orange-400">
+                Unsaved changes
+              </span>
+              <Button size="sm" className="ml-auto" onClick={handleSave} disabled={saving}>
+                <Save className="h-3.5 w-3.5 mr-1" />
+                {saving ? 'Saving…' : 'Save'}
+              </Button>
+            </>
           )}
-        </div>
-        <div className="flex items-center gap-2">
-          {dirty && (
-            <Button size="sm" onClick={handleSave} disabled={saving}>
-              <Save className="h-3.5 w-3.5 mr-1" />
-              {saving ? 'Saving…' : 'Save'}
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0 text-red-400 hover:text-red-600"
-            title="Delete this criteria set"
-            onClick={() => setConfirmDelete(true)}
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-          <Button
-            variant="ghost"
-            size="sm"
-            className="h-7 w-7 p-0"
-            onClick={() => setExpanded((e) => !e)}
-          >
-            {expanded ? (
-              <ChevronUp className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-            ) : (
-              <ChevronDown className="h-4 w-4 text-gray-400 dark:text-gray-500" />
-            )}
-          </Button>
         </div>
       </CardHeader>
 
@@ -324,7 +338,7 @@ function CriteriaSetCard({
         <CardContent className="space-y-2">
           {/* Column headers */}
           {criteria.length > 0 && (
-            <div className="grid grid-cols-12 gap-2 px-3 text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide">
+            <div className="hidden grid-cols-12 gap-2 px-3 text-xs font-medium text-gray-400 dark:text-gray-500 uppercase tracking-wide lg:grid">
               <div className="col-span-1">#</div>
               <div className="col-span-3">Label</div>
               <div className="col-span-2">Field Key</div>
@@ -363,6 +377,20 @@ function CriteriaSetCard({
             <Plus className="h-4 w-4 mr-1" />
             Add Criterion
           </Button>
+
+          {/* Mobile-only Save at the bottom — saves a long scroll back up to the
+              header after adding/editing criteria. Desktop uses the header Save. */}
+          {dirty && (
+            <Button
+              size="sm"
+              className="w-full lg:hidden"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              <Save className="mr-1 h-3.5 w-3.5" />
+              {saving ? 'Saving…' : 'Save changes'}
+            </Button>
+          )}
         </CardContent>
       )}
     </Card>
@@ -378,7 +406,7 @@ function CriteriaSetCard({
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
-          <AlertDialogCancel>Cancel</AlertDialogCancel>
+          <AlertDialogCancel disabled={deleting}>Cancel</AlertDialogCancel>
           <AlertDialogAction
             className="bg-red-600 hover:bg-red-700"
             onClick={handleDelete}
@@ -427,7 +455,7 @@ function NewCriteriaSetForm({
   return (
     <Card className="border-dashed border-blue-200 dark:border-blue-900/50 bg-blue-50 dark:bg-blue-950/20">
       <CardContent className="p-4">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-1">
             <Label htmlFor="new-entity-type" className="text-sm font-medium">
               New Entity Type
@@ -454,11 +482,11 @@ function NewCriteriaSetForm({
               onKeyDown={(e) => e.key === 'Enter' && handleCreate()}
             />
           </div>
-          <div className="flex gap-2 pt-5">
+          <div className="grid grid-cols-2 gap-2 sm:flex">
             <Button onClick={handleCreate} disabled={!entityType.trim() || isLoading} size="sm">
               {isLoading ? 'Creating…' : 'Create'}
             </Button>
-            <Button variant="outline" size="sm" onClick={onClose}>
+            <Button variant="outline" size="sm" onClick={onClose} disabled={isLoading}>
               Cancel
             </Button>
           </div>
@@ -479,8 +507,8 @@ export default function CriteriaPage() {
   const [entityTypeFilter, setEntityTypeFilter] = useState<string>('all');
   const [addingNew, setAddingNew] = useState(false);
 
-  const { data: platforms } = useGetAllPlatformsQuery();
-  const { data: criteriaSets, isLoading } = useGetCriteriaByPlatformQuery(
+  const { data: platforms, isError: platformsError, refetch: platformsRefetch } = useGetAllPlatformsQuery();
+  const { data: criteriaSets, isLoading, isFetching, isError, refetch } = useGetCriteriaByPlatformQuery(
     { platform_id: selectedPlatform },
     { skip: !selectedPlatform },
   );
@@ -502,22 +530,35 @@ export default function CriteriaPage() {
       {/* Platform + entity type selector */}
       <div className="flex flex-wrap items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
         <ListChecks className="h-4 w-4 text-indigo-500 shrink-0" />
-        <Select value={selectedPlatform} onValueChange={handlePlatformChange}>
-          <SelectTrigger className="w-56">
-            <SelectValue placeholder="Select platform" />
-          </SelectTrigger>
-          <SelectContent>
-            {platforms?.map((p) => (
-              <SelectItem key={p.platform_id} value={p.platform_id}>
-                {p.platform_name}
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+        {selectedPlatform && (
+          <RefreshButton onClick={refetch} busy={isFetching} title="Refresh criteria" />
+        )}
+        {platformsError ? (
+          <button
+            type="button"
+            onClick={() => platformsRefetch()}
+            className="inline-flex items-center gap-1.5 text-sm font-medium text-red-600 hover:text-red-700 dark:text-red-400"
+          >
+            <RefreshCw className="h-3.5 w-3.5" /> Could not load platforms - Retry
+          </button>
+        ) : (
+          <Select value={selectedPlatform} onValueChange={handlePlatformChange}>
+            <SelectTrigger className="w-full sm:w-56">
+              <SelectValue placeholder="Select platform" />
+            </SelectTrigger>
+            <SelectContent>
+              {platforms?.map((p) => (
+                <SelectItem key={p.platform_id} value={p.platform_id}>
+                  {p.platform_name}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
 
         {selectedPlatform && entityTypes.length > 0 && (
           <Select value={entityTypeFilter} onValueChange={setEntityTypeFilter}>
-            <SelectTrigger className="w-40">
+            <SelectTrigger className="w-full sm:w-40">
               <SelectValue placeholder="Entity type" />
             </SelectTrigger>
             <SelectContent>
@@ -567,6 +608,8 @@ export default function CriteriaPage() {
             <Skeleton key={i} className="h-48 w-full rounded-xl" />
           ))}
         </div>
+      ) : isError ? (
+        <ErrorState onRetry={refetch} />
       ) : filtered.length === 0 ? (
         <div className="rounded-xl border border-dashed border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-900 py-20 text-center">
           <ListChecks className="mx-auto h-10 w-10 text-gray-300 dark:text-gray-600 mb-3" />

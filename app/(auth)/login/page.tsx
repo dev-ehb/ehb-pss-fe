@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { useForm } from 'react-hook-form';
@@ -23,6 +23,14 @@ export default function LoginPage() {
   const router = useRouter();
   const [showKey, setShowKey] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  // Becomes true only after hydration; until then the submit button stays
+  // disabled so a click during a slow page load cannot trigger a native
+  // form submit (page reload / admin key in URL).
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const {
     register,
@@ -46,13 +54,18 @@ export default function LoginPage() {
           description: 'Invalid admin key. Please try again.',
           variant: 'destructive',
         });
+        setIsLoading(false);
       } else if (result?.ok) {
-        toast({
-          title: 'Signed In',
-          description: 'Welcome to PSS Admin.',
-        });
+        // Welcome toast is shown AFTER the dashboard loads (see WelcomeToast).
+        // Keep the button disabled through navigation so a slow page load
+        // cannot let a second sign-in fire.
+        if (typeof window !== 'undefined') {
+          sessionStorage.setItem('pss_welcome', '1');
+        }
         router.push('/overview');
         router.refresh();
+      } else {
+        setIsLoading(false);
       }
     } catch {
       toast({
@@ -60,7 +73,6 @@ export default function LoginPage() {
         description: 'An unexpected error occurred. Please try again.',
         variant: 'destructive',
       });
-    } finally {
       setIsLoading(false);
     }
   };
@@ -74,7 +86,7 @@ export default function LoginPage() {
             <Shield className="h-8 w-8" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">PSS Admin</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">EHB Platform Support Services</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">EHB Personal Security Services</p>
         </div>
 
         <Card className="shadow-lg">
@@ -112,8 +124,13 @@ export default function LoginPage() {
                 )}
               </div>
 
-              <Button type="submit" className="w-full" disabled={isLoading}>
-                {isLoading ? (
+              <Button type="submit" className="w-full" disabled={!mounted || isLoading}>
+                {!mounted ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Loading…
+                  </>
+                ) : isLoading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                     Signing in…
@@ -135,7 +152,7 @@ export default function LoginPage() {
         </Card>
 
         <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-6">
-          EHB Platform Support Services · Admin Dashboard
+          EHB Personal Security Services · Admin Dashboard
         </p>
       </div>
     </div>

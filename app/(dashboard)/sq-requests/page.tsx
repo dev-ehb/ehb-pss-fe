@@ -10,6 +10,7 @@ import { SqBadge } from '@/components/sq/sq-badge';
 import { SqStatusPill } from '@/components/sq/sq-status-pill';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ErrorState } from '@/components/ui/error-state';
 import {
   Select,
   SelectContent,
@@ -110,7 +111,7 @@ export default function SqRequestsPage() {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [platformFilter, setPlatformFilter] = useState<string>('all');
 
-  const { data, isLoading, isFetching } = useGetPendingRequestsQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useGetPendingRequestsQuery({
     status: statusFilter === 'all' ? undefined : statusFilter,
     platform_id: platformFilter === 'all' ? undefined : platformFilter,
     page: pagination.pageIndex + 1,
@@ -122,10 +123,10 @@ export default function SqRequestsPage() {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
         <Filter className="h-4 w-4 text-gray-400 shrink-0" />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-full sm:w-44">
             <SelectValue placeholder="Status" />
           </SelectTrigger>
           <SelectContent>
@@ -138,7 +139,7 @@ export default function SqRequestsPage() {
         </Select>
 
         <Select value={platformFilter} onValueChange={setPlatformFilter}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-full sm:w-44">
             <SelectValue placeholder="Platform" />
           </SelectTrigger>
           <SelectContent>
@@ -164,18 +165,24 @@ export default function SqRequestsPage() {
       </div>
 
       {/* Table */}
-      <DataTable
-        data={data?.data ?? []}
-        columns={columns}
-        isLoading={isLoading || isFetching}
-        totalRows={data?.total}
-        pagination={pagination}
-        onPaginationChange={setPagination}
-        manualPagination
-        enableGlobalFilter={false}
-        emptyMessage="No SQ requests found."
-        onRowClick={(row) => router.push(`/sq-requests/${row.sq_request_id}`)}
-      />
+      {isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : (
+        <DataTable
+          data={data?.data ?? []}
+          columns={columns}
+          isLoading={isLoading || isFetching}
+          totalRows={data?.total}
+          pagination={pagination}
+          onPaginationChange={setPagination}
+          manualPagination
+          enableGlobalFilter={false}
+          emptyMessage="No SQ requests found."
+          onRefresh={refetch}
+          isRefreshing={isFetching}
+          onRowClick={(row) => router.push(`/sq-requests/${row.sq_request_id}`)}
+        />
+      )}
     </div>
   );
 }

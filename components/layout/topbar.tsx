@@ -1,11 +1,16 @@
 'use client';
 
 import { usePathname } from 'next/navigation';
-import { Bell, RefreshCw, Moon, Sun } from 'lucide-react';
+import { useState } from 'react';
+import { Bell, RefreshCw, Moon, Sun, LogOut, Menu, ChevronDown } from 'lucide-react';
+import { useSession } from 'next-auth/react';
+import { useSignOut } from '@/lib/use-sign-out';
+import { useMobileSidebar } from '@/lib/use-mobile-sidebar';
 import { Button } from '@/components/ui/button';
 import { useAppDispatch } from '@/lib/store/hooks';
-import { baseApi } from '@/lib/store/api/base-api';
+import { baseApi, ALL_TAGS } from '@/lib/store/api/base-api';
 import { useTheme } from '@/components/theme/ThemeProvider';
+import { NavDropdown } from '@/components/layout/nav-dropdown';
 
 const PAGE_TITLES: Record<string, string> = {
   '/overview': 'Overview',
@@ -19,32 +24,53 @@ const PAGE_TITLES: Record<string, string> = {
 };
 
 function getPageTitle(pathname: string): string {
-  // Check exact match
   if (PAGE_TITLES[pathname]) return PAGE_TITLES[pathname];
-  // Check prefix match for nested routes
   for (const [path, title] of Object.entries(PAGE_TITLES)) {
     if (pathname.startsWith(path + '/')) return title;
   }
   return 'PSS Admin';
 }
 
+const panelClass =
+  'absolute right-0 mt-2 w-64 rounded-lg border border-gray-200 bg-white p-1 shadow-lg dark:border-gray-800 dark:bg-gray-900 z-50';
+
 export function Topbar() {
   const pathname = usePathname();
   const dispatch = useAppDispatch();
   const { theme, toggleTheme } = useTheme();
+  const { data: session } = useSession();
+  const { signingOut, signOutNow } = useSignOut();
+  const { openSidebar } = useMobileSidebar();
+  const [notifOpen, setNotifOpen] = useState(false);
 
   const handleRefresh = () => {
-    dispatch(baseApi.util.invalidateTags(['SqRequest', 'EdrReview', 'Franchise', 'Stats']));
+    // Invalidate every tag so all queries on the current page refetch (not just
+    // a hard-coded subset) — Audit, Platforms, Criteria, Rule Engine, etc. too.
+    dispatch(baseApi.util.invalidateTags([...ALL_TAGS]));
   };
 
+  const name = session?.user?.name ?? 'EHB Admin';
+  const email = session?.user?.email ?? 'admin@ehb.internal';
+  const initial = name.charAt(0).toUpperCase();
+
   return (
-    <header className="flex h-16 items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-6">
-      <div>
-        <h1 className="text-lg font-semibold text-gray-900 dark:text-gray-100">{getPageTitle(pathname)}</h1>
-        <p className="text-xs text-gray-500 dark:text-gray-400">PSS Platform Support Services</p>
+    <header className="flex h-16 items-center justify-between border-b border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 px-4 sm:px-6">
+      <div className="flex items-center gap-3 min-w-0">
+        {/* Hamburger — opens the mobile drawer (mobile only) */}
+        <button
+          onClick={openSidebar}
+          aria-label="Open menu"
+          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md text-gray-500 hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100 lg:hidden"
+        >
+          <Menu className="h-5 w-5" />
+        </button>
+        <div className="min-w-0">
+          <h1 className="truncate text-lg font-semibold text-gray-900 dark:text-gray-100">{getPageTitle(pathname)}</h1>
+          <p className="truncate text-xs text-gray-500 dark:text-gray-400">PSS Personal Security Services</p>
+        </div>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-1 sm:gap-3">
         <Button
           variant="ghost"
           size="icon"
@@ -63,17 +89,71 @@ export function Topbar() {
         >
           {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
         </Button>
-        <Button
-          variant="ghost"
-          size="icon"
-          title="Notifications"
-          className="text-gray-500 dark:text-gray-400 hover:text-gray-900 dark:hover:text-gray-100"
-        >
-          <Bell className="h-4 w-4" />
-        </Button>
-        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-white text-xs font-semibold">
-          A
+
+        {/* Notifications — desktop only; on mobile it moves into the account menu */}
+        <div className="hidden sm:block">
+          <NavDropdown
+            triggerLabel="Notifications"
+            triggerClassName="inline-flex h-10 w-10 items-center justify-center rounded-md text-gray-500 transition-colors hover:bg-gray-100 hover:text-gray-900 dark:text-gray-400 dark:hover:bg-gray-800 dark:hover:text-gray-100"
+            trigger={<Bell className="h-4 w-4" />}
+            panelClassName={panelClass}
+          >
+            <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-800">
+              <p className="text-sm font-semibold text-gray-900 dark:text-gray-100">Notifications</p>
+            </div>
+            <div className="px-3 py-6 text-center">
+              <p className="text-sm text-gray-500 dark:text-gray-400">No new notifications</p>
+            </div>
+          </NavDropdown>
         </div>
+
+        {/* Account */}
+        <NavDropdown
+          triggerLabel="Account"
+          triggerClassName="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-gray-300 dark:focus-visible:ring-gray-700"
+          trigger={
+            <span className="flex h-8 w-8 items-center justify-center rounded-full bg-blue-600 text-xs font-semibold text-white">
+              {initial}
+            </span>
+          }
+          panelClassName={panelClass}
+        >
+          <div className="border-b border-gray-100 px-3 py-2 dark:border-gray-800">
+            <p className="truncate text-sm font-semibold text-gray-900 dark:text-gray-100">{name}</p>
+            <p className="truncate text-xs text-gray-500 dark:text-gray-400">{email}</p>
+          </div>
+          {/* Notifications — mobile only (the bell is hidden < sm). Click to reveal;
+              stopPropagation keeps the account dropdown open (panel closes on any inner click). */}
+          <div className="sm:hidden">
+            <button
+              type="button"
+              onClick={(e) => {
+                e.stopPropagation();
+                setNotifOpen((o) => !o);
+              }}
+              className="flex w-full items-center justify-between gap-2 border-b border-gray-100 px-3 py-2.5 text-sm font-semibold text-gray-900 transition-colors hover:bg-gray-50 dark:border-gray-800 dark:text-gray-100 dark:hover:bg-gray-800"
+            >
+              <span className="flex items-center gap-2">
+                <Bell className="h-4 w-4 text-gray-400 dark:text-gray-500" /> Notifications
+              </span>
+              <ChevronDown
+                className={`h-4 w-4 text-gray-400 transition-transform dark:text-gray-500 ${notifOpen ? 'rotate-180' : ''}`}
+              />
+            </button>
+            {notifOpen && (
+              <div className="border-b border-gray-100 px-3 py-3 pl-9 text-xs text-gray-500 dark:border-gray-800 dark:text-gray-400">
+                No new notifications
+              </div>
+            )}
+          </div>
+          <button
+            onClick={signOutNow}
+            disabled={signingOut}
+            className="flex w-full items-center gap-2 rounded-md px-3 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed dark:text-gray-300 dark:hover:bg-gray-800"
+          >
+            <LogOut className="h-4 w-4" /> {signingOut ? 'Signing out…' : 'Sign out'}
+          </button>
+        </NavDropdown>
       </div>
     </header>
   );

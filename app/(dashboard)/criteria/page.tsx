@@ -4,11 +4,12 @@ import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useGetAllPlatformsQuery } from '@/lib/store/api/platforms.api';
 import { Skeleton } from '@/components/ui/skeleton';
+import { ErrorState } from '@/components/ui/error-state';
 import { ListChecks } from 'lucide-react';
 
 export default function CriteriaIndexPage() {
   const router = useRouter();
-  const { data: platforms, isLoading } = useGetAllPlatformsQuery();
+  const { data: platforms, isLoading, isError, refetch } = useGetAllPlatformsQuery();
 
   useEffect(() => {
     const first = platforms?.[0];
@@ -24,6 +25,10 @@ export default function CriteriaIndexPage() {
         <Skeleton className="h-48 w-full rounded-xl" />
       </div>
     );
+  }
+
+  if (isError) {
+    return <ErrorState onRetry={refetch} />;
   }
 
   if (!platforms || platforms.length === 0) {

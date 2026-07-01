@@ -11,6 +11,7 @@ import {
   useRegisterPlatformMutation,
 } from '@/lib/store/api/platforms.api';
 import { DataTable } from '@/components/ui/data-table';
+import { ErrorState } from '@/components/ui/error-state';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import {
@@ -181,7 +182,7 @@ function RegisterModal({
         ) : (
           /* Step 1: Registration form */
           <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label htmlFor="platform_id">Platform ID</Label>
                 <input
@@ -254,7 +255,7 @@ function RegisterModal({
             </div>
 
             <DialogFooter>
-              <Button type="button" variant="outline" onClick={handleClose}>
+              <Button type="button" variant="outline" onClick={handleClose} disabled={isLoading}>
                 Cancel
               </Button>
               <Button type="submit" disabled={isLoading}>
@@ -338,7 +339,7 @@ export default function PlatformsPage() {
   const router = useRouter();
   const [modalOpen, setModalOpen] = useState(false);
 
-  const { data: platforms, isLoading } = useGetAllPlatformsQuery();
+  const { data: platforms, isLoading, isError, refetch } = useGetAllPlatformsQuery();
 
   const active = platforms?.filter((p) => p.status === 'active').length ?? 0;
   const suspended = platforms?.filter((p) => p.status === 'suspended').length ?? 0;
@@ -346,8 +347,8 @@ export default function PlatformsPage() {
   return (
     <div className="space-y-4">
       {/* Header stats */}
-      <div className="flex items-center justify-between rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
-        <div className="flex items-center gap-6">
+      <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+        <div className="flex items-center gap-4 sm:gap-6">
           <div className="flex items-center gap-2">
             <Globe className="h-5 w-5 text-blue-600" />
             <div>
@@ -366,20 +367,25 @@ export default function PlatformsPage() {
           </div>
         </div>
 
-        <Button onClick={() => setModalOpen(true)}>
+        <Button className="w-full sm:w-auto" onClick={() => setModalOpen(true)}>
           <Plus className="h-4 w-4 mr-1.5" />
           Register Platform
         </Button>
       </div>
 
       {/* Table */}
-      <DataTable
-        data={platforms ?? []}
-        columns={columns}
-        isLoading={isLoading}
-        emptyMessage="No platforms registered."
-        onRowClick={(row) => router.push(`/platforms/${row.platform_id}`)}
-      />
+      {isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : (
+        <DataTable
+          data={platforms ?? []}
+          columns={columns}
+          isLoading={isLoading}
+          emptyMessage="No platforms registered."
+          onRefresh={refetch}
+          onRowClick={(row) => router.push(`/platforms/${row.platform_id}`)}
+        />
+      )}
 
       {/* Register modal */}
       <RegisterModal open={modalOpen} onClose={() => setModalOpen(false)} />

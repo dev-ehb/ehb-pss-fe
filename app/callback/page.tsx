@@ -59,7 +59,7 @@ function CallbackInner() {
         </div>
 
         <h1 className="text-2xl font-bold text-gray-900 mb-1">PSS Admin</h1>
-        <p className="text-sm text-gray-400 mb-8">EHB Platform Support Services</p>
+        <p className="text-sm text-gray-400 mb-8">EHB Personal Security Services</p>
 
         {/* Status card */}
         <div className="rounded-2xl border border-gray-200 bg-white px-8 py-8 shadow-sm">
@@ -129,7 +129,7 @@ function CallbackFallback() {
           <Shield className="h-8 w-8" />
         </div>
         <h1 className="text-2xl font-bold text-gray-900 mb-1">PSS Admin</h1>
-        <p className="text-sm text-gray-400 mb-8">EHB Platform Support Services</p>
+        <p className="text-sm text-gray-400 mb-8">EHB Personal Security Services</p>
         <div className="rounded-2xl border border-gray-200 bg-white px-8 py-8 shadow-sm">
           <p className="text-sm font-medium text-gray-600">Loading…</p>
         </div>

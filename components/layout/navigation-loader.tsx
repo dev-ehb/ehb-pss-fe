@@ -62,13 +62,14 @@ export function NavigationLoader() {
       aria-label="Loading page"
       role="status"
       className="absolute inset-0 z-50 flex items-center justify-center
-                 backdrop-blur-[3px] bg-white/40"
+                 backdrop-blur-[3px] bg-white/40 dark:bg-gray-950/50"
     >
       {/* Frosted card */}
       <div
         className="flex flex-col items-center gap-4 rounded-2xl
                    border border-gray-100 bg-white/80 px-10 py-8
-                   shadow-xl shadow-gray-200/60"
+                   shadow-xl shadow-gray-200/60
+                   dark:border-gray-800 dark:bg-gray-900/80 dark:shadow-black/40"
       >
         {/* Circular SVG spinner */}
         <span className="relative flex h-12 w-12 items-center justify-center">
@@ -82,8 +83,8 @@ export function NavigationLoader() {
               cx="24"
               cy="24"
               r="20"
-              stroke="#E5E7EB"
               strokeWidth="4"
+              className="stroke-gray-200 dark:stroke-gray-700"
             />
           </svg>
 

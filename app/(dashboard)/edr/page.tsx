@@ -8,6 +8,7 @@ import { useGetAllPlatformsQuery } from '@/lib/store/api/platforms.api';
 import { DataTable } from '@/components/ui/data-table';
 import { SqStatusPill } from '@/components/sq/sq-status-pill';
 import { Button } from '@/components/ui/button';
+import { ErrorState } from '@/components/ui/error-state';
 import {
   Select,
   SelectContent,
@@ -129,7 +130,7 @@ export default function EdrQueuePage() {
   const [platformFilter, setPlatformFilter] = useState<string>('all');
   const [statusFilter, setStatusFilter] = useState<string>('pending');
 
-  const { data, isLoading, isFetching } = useGetEdrQueueQuery({
+  const { data, isLoading, isFetching, isError, refetch } = useGetEdrQueueQuery({
     platform_id: platformFilter === 'all' ? undefined : platformFilter,
     status: statusFilter === 'all' ? undefined : statusFilter,
     page: pagination.pageIndex + 1,
@@ -141,10 +142,10 @@ export default function EdrQueuePage() {
   return (
     <div className="space-y-4">
       {/* Filters */}
-      <div className="flex items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
+      <div className="flex flex-wrap items-center gap-3 rounded-lg border dark:border-gray-800 bg-white dark:bg-gray-900 p-4">
         <Filter className="h-4 w-4 text-gray-400 dark:text-gray-500 shrink-0" />
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-full sm:w-44">
             <SelectValue placeholder="Decision" />
           </SelectTrigger>
           <SelectContent>
@@ -157,7 +158,7 @@ export default function EdrQueuePage() {
         </Select>
 
         <Select value={platformFilter} onValueChange={setPlatformFilter}>
-          <SelectTrigger className="w-44">
+          <SelectTrigger className="w-full sm:w-44">
             <SelectValue placeholder="Platform" />
           </SelectTrigger>
           <SelectContent>
@@ -181,18 +182,24 @@ export default function EdrQueuePage() {
         )}
       </div>
 
-      <DataTable
-        data={data?.data ?? []}
-        columns={columns}
-        isLoading={isLoading || isFetching}
-        totalRows={data?.total}
-        pagination={pagination}
-        onPaginationChange={setPagination}
-        manualPagination
-        enableGlobalFilter={false}
-        emptyMessage="No EDR reviews in queue."
-        onRowClick={(row) => router.push(`/edr/${row.sq_request_id}`)}
-      />
+      {isError ? (
+        <ErrorState onRetry={refetch} />
+      ) : (
+        <DataTable
+          data={data?.data ?? []}
+          columns={columns}
+          isLoading={isLoading || isFetching}
+          totalRows={data?.total}
+          pagination={pagination}
+          onPaginationChange={setPagination}
+          manualPagination
+          enableGlobalFilter={false}
+          emptyMessage="No EDR reviews in queue."
+          onRefresh={refetch}
+          isRefreshing={isFetching}
+          onRowClick={(row) => router.push(`/edr/${row.sq_request_id}`)}
+        />
+      )}
     </div>
   );
 }

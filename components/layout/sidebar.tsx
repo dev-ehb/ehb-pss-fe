@@ -16,8 +16,10 @@ import {
   LogOut,
   PanelLeftClose,
   PanelLeftOpen,
+  X,
 } from 'lucide-react';
-import { signOut } from 'next-auth/react';
+import { useSignOut } from '@/lib/use-sign-out';
+import { useMobileSidebar } from '@/lib/use-mobile-sidebar';
 import { cn } from '@/lib/utils';
 
 interface NavItem {
@@ -41,18 +43,34 @@ const NAV_ITEMS: NavItem[] = [
 export function Sidebar() {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const { signingOut, signOutNow } = useSignOut();
+  const { isOpen, closeSidebar } = useMobileSidebar();
 
   return (
-    <aside
-      className={cn(
-        'flex h-full flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 transition-all duration-200',
-        collapsed ? 'w-[60px]' : 'w-[220px]',
+    <>
+      {/* Mobile backdrop — closes the drawer on tap (mobile only) */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          onClick={closeSidebar}
+          aria-hidden
+        />
       )}
-    >
+
+      <aside
+        className={cn(
+          'flex h-full flex-col border-r border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 transition-all duration-200',
+          // Mobile: off-canvas drawer that slides in over the content.
+          'fixed inset-y-0 left-0 z-50 w-[260px] lg:static lg:z-auto lg:translate-x-0',
+          isOpen ? 'translate-x-0' : '-translate-x-full',
+          // Desktop: static, collapsible width.
+          collapsed ? 'lg:w-[60px]' : 'lg:w-[220px]',
+        )}
+      >
       {/* Logo */}
       <div
         className={cn(
-          'flex h-14 items-center border-b border-gray-100 dark:border-gray-800 px-4',
+          'flex h-16 items-center border-b border-gray-100 dark:border-gray-800 px-4',
           collapsed ? 'justify-center' : 'gap-2.5',
         )}
       >
@@ -65,10 +83,19 @@ export function Sidebar() {
               PSS Admin
             </p>
             <p className="truncate text-[11px] text-gray-400 dark:text-gray-500 leading-tight">
-              EHB Platform Services
+              EHB Personal Security Services
             </p>
           </div>
         )}
+
+        {/* Mobile close button (drawer only) */}
+        <button
+          onClick={closeSidebar}
+          aria-label="Close menu"
+          className="ml-auto flex h-8 w-8 items-center justify-center rounded-md text-gray-400 hover:bg-gray-100 hover:text-gray-700 dark:hover:bg-gray-800 dark:hover:text-gray-200 lg:hidden"
+        >
+          <X className="h-5 w-5" />
+        </button>
       </div>
 
       {/* Navigation */}
@@ -85,6 +112,7 @@ export function Sidebar() {
                 <Link
                   href={item.href}
                   title={collapsed ? item.label : undefined}
+                  onClick={closeSidebar}
                   className={cn(
                     'flex items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium transition-colors',
                     collapsed && 'justify-center px-0',
@@ -111,23 +139,24 @@ export function Sidebar() {
       <div className="border-t border-gray-100 dark:border-gray-800 px-2 py-2 space-y-0.5">
         {/* Sign Out */}
         <button
-          onClick={() => signOut({ callbackUrl: '/login' })}
+          onClick={signOutNow}
+          disabled={signingOut}
           title={collapsed ? 'Sign Out' : undefined}
           className={cn(
-            'flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200 transition-colors',
+            'flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200 transition-colors disabled:opacity-50 disabled:cursor-not-allowed',
             collapsed && 'justify-center px-0',
           )}
         >
           <LogOut className="h-4 w-4 shrink-0 text-gray-400 dark:text-gray-500" />
-          {!collapsed && <span>Sign Out</span>}
+          {!collapsed && <span>{signingOut ? 'Signing out…' : 'Sign Out'}</span>}
         </button>
 
-        {/* Collapse toggle */}
+        {/* Collapse toggle — desktop only (mobile uses the drawer) */}
         <button
           onClick={() => setCollapsed((prev) => !prev)}
           title={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
           className={cn(
-            'flex w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200 transition-colors',
+            'hidden w-full items-center gap-3 rounded-md px-2.5 py-2 text-sm font-medium text-gray-500 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 hover:text-gray-800 dark:hover:text-gray-200 transition-colors lg:flex',
             collapsed && 'justify-center px-0',
           )}
         >
@@ -142,5 +171,6 @@ export function Sidebar() {
         </button>
       </div>
     </aside>
+    </>
   );
 }
