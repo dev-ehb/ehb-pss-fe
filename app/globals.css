@@ -63,3 +63,21 @@
     scrollbar-width: thin;
   }
 }
+
+/* Theme switch crossfade (driven by ThemeProvider's View Transition).
+   Only the full-page root snapshot animates, so light<->dark dissolves as one
+   GPU-composited layer — no white border flashes, no region-by-region repaint
+   where the sidebar lags the content. */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.28s;
+  animation-timing-function: ease;
+}
+
+/* Respect users who ask for less motion — swap instantly, no crossfade. */
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none;
+  }
+}

@@ -1,6 +1,7 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState } from 'react';
+import { flushSync } from 'react-dom';
 
 type Theme = 'light' | 'dark';
 
@@ -14,6 +15,15 @@ const ThemeContext = createContext<ThemeContextValue>({
   toggleTheme: () => {},
 });
 
+// The View Transitions API isn't in every TS lib.dom yet — narrow it locally.
+type ViewTransitionDocument = Document & {
+  startViewTransition?: (callback: () => void) => { finished: Promise<void> };
+};
+
+function applyThemeClass(theme: Theme) {
+  document.documentElement.classList.toggle('dark', theme === 'dark');
+}
+
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
   const [theme, setTheme] = useState<Theme>('light');
 
@@ -22,16 +32,39 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
     const initial: Theme = stored ?? (prefersDark ? 'dark' : 'light');
     setTheme(initial);
-    document.documentElement.classList.toggle('dark', initial === 'dark');
+    applyThemeClass(initial);
   }, []);
 
   const toggleTheme = () => {
-    setTheme((prev) => {
-      const next: Theme = prev === 'light' ? 'dark' : 'light';
+    const next: Theme = theme === 'light' ? 'dark' : 'light';
+
+    try {
       localStorage.setItem('pss-theme', next);
-      document.documentElement.classList.toggle('dark', next === 'dark');
-      return next;
-    });
+    } catch {
+      /* localStorage can throw in private mode — ignore, the class still flips */
+    }
+
+    // Flip the class + the React icon together, forced synchronously, so the
+    // View Transition captures the finished light/dark frame in one snapshot.
+    const commit = () => {
+      flushSync(() => setTheme(next));
+      applyThemeClass(next);
+    };
+
+    const doc = document as ViewTransitionDocument;
+    const prefersReduced = window.matchMedia(
+      '(prefers-reduced-motion: reduce)',
+    ).matches;
+
+    // Crossfade the whole page between two COMPLETE snapshots (GPU-composited),
+    // so light<->dark dissolves cleanly instead of flashing white borders or
+    // repainting region-by-region (sidebar lagging the content). Falls back to
+    // an instant swap where the API is unavailable or motion is reduced.
+    if (!prefersReduced && typeof doc.startViewTransition === 'function') {
+      doc.startViewTransition(commit);
+    } else {
+      commit();
+    }
   };
 
   return (
