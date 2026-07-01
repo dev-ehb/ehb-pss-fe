@@ -83,7 +83,7 @@ export function Sidebar() {
               PSS Admin
             </p>
             <p className="truncate text-[11px] text-gray-400 dark:text-gray-500 leading-tight">
-              EHB Platform Services
+              EHB Personal Security Services
             </p>
           </div>
         )}

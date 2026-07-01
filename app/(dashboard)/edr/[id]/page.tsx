@@ -31,9 +31,9 @@ import { SqBadge } from '@/components/sq/sq-badge';
 import { SqStatusPill } from '@/components/sq/sq-status-pill';
 import { AuditActionBadge } from '@/components/audit/audit-action-badge';
 import { toast } from '@/components/ui/toaster';
-import { formatDate, flattenObject, getSqLevelDisplay } from '@/lib/utils';
+import { cn, formatDate, flattenObject, getSqLevelDisplay } from '@/lib/utils';
 import type { SqLevel } from '@/types/pss.types';
-import { ArrowLeft, Edit3, RotateCcw, Loader2 } from 'lucide-react';
+import { ArrowLeft, Edit3, RotateCcw, Loader2, ImageOff } from 'lucide-react';
 
 // ── Form schemas ──────────────────────────────────────────────────────────────
 
@@ -99,9 +99,40 @@ const ITEM_LABELS: Record<string, string> = {
   address_proof: 'Address proof', facial: 'Facial verification (selfie)', platform: 'Platform',
 };
 
-const isImageValue = (key: string, value: string): boolean =>
-  /^data:image\//.test(value) ||
-  (/^https?:\/\/\S+$/.test(value) && /(cnic|facial|selfie|photo|proof|avatar|image)/i.test(key));
+/** Entity image with graceful fallback for empty / broken sources (mirrors the SQ detail page). */
+function EntityImage({ label, src, wide }: { label: string; src: string; wide?: boolean }) {
+  const [failed, setFailed] = useState(false);
+  const hasSrc = !!src && src.trim() !== '' && src !== '—';
+
+  return (
+    <div
+      className={cn(
+        'flex flex-col rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800',
+        wide && 'sm:col-span-2',
+      )}
+    >
+      <span className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+        {label}
+      </span>
+      {hasSrc && !failed ? (
+        <a href={src} target="_blank" rel="noreferrer" className="mt-2 block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src={src}
+            alt={label}
+            onError={() => setFailed(true)}
+            className="h-auto w-full rounded-md border border-gray-200 bg-white dark:border-gray-700"
+          />
+        </a>
+      ) : (
+        <div className="mt-2 flex h-44 w-full flex-col items-center justify-center gap-1.5 rounded-md border border-dashed border-gray-300 text-gray-400 dark:border-gray-600 dark:text-gray-500">
+          <ImageOff className="h-6 w-6" />
+          <span className="text-xs">No image provided</span>
+        </div>
+      )}
+    </div>
+  );
+}
 
 function fmtHistVal(v: unknown): string {
   if (v === undefined || v === null || v === '') return '—';
@@ -207,7 +238,7 @@ export default function EdrReviewPage() {
   if (isLoading) {
     return (
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        <div className="col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-4">
           <Skeleton className="h-8 w-64" />
           <Skeleton className="h-48 w-full" />
           <Skeleton className="h-32 w-full" />
@@ -238,15 +269,15 @@ export default function EdrReviewPage() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center gap-3">
-        <Button variant="ghost" size="sm" onClick={() => router.back()}>
+      <div className="flex flex-wrap items-center gap-3">
+        <Button variant="ghost" size="sm" className="shrink-0" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-1" />Back
         </Button>
-        <div>
-          <h2 className="text-base font-semibold font-mono">{sq_request.sq_request_id}</h2>
+        <div className="min-w-0 flex-1">
+          <h2 className="text-base font-semibold font-mono break-all">{sq_request.sq_request_id}</h2>
           <p className="text-xs text-gray-500 dark:text-gray-400">{sq_request.entity_type} · {sq_request.platform_id}</p>
         </div>
-        <div className="ml-auto flex items-center gap-2">
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
           <SqStatusPill status={sq_request.status} />
           <SqBadge level={sq_request.sq_level_calculated} />
           {isPreviouslyDecided && (
@@ -259,7 +290,7 @@ export default function EdrReviewPage() {
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Left: full detail */}
-        <div className="col-span-2 space-y-4">
+        <div className="lg:col-span-2 space-y-4">
           {/* Franchise summary if escalated */}
           {franchise_review && (
             <Card className="border-orange-200 dark:border-orange-900/50 bg-orange-50 dark:bg-orange-950/30">
@@ -306,20 +337,31 @@ export default function EdrReviewPage() {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-2 gap-2">
+                <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                   {entityFields.map(({ key, value }) => {
-                    const img = isImageValue(key, value);
+                    const label = ITEM_LABELS[key] ?? key;
+                    const isImageField =
+                      /(cnic|facial|selfie|photo|proof|avatar|image|picture|document)/i.test(key);
+                    const looksLikeImageValue =
+                      /^data:image\//.test(value) || /^https?:\/\/\S+$/.test(value);
+
+                    if (isImageField || looksLikeImageValue) {
+                      // Document-style proofs read better full width; ID cards pair up 2-col.
+                      const wide = /proof|document|certificate|bill|agreement|contract/i.test(key);
+                      return <EntityImage key={key} label={label} src={value} wide={wide} />;
+                    }
+
                     return (
-                      <div key={key} className={`rounded-lg bg-gray-50 dark:bg-gray-800 p-2.5 ${img ? 'col-span-2' : ''}`}>
-                        <span className="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">{ITEM_LABELS[key] ?? key}</span>
-                        {img ? (
-                          <a href={value} target="_blank" rel="noreferrer" className="mt-1 block">
-                            {/* eslint-disable-next-line @next/next/no-img-element */}
-                            <img src={value} alt={key} className="max-h-56 w-auto rounded-md border border-gray-200 dark:border-gray-700 object-contain bg-white" />
-                          </a>
-                        ) : (
-                          <p className="text-sm text-gray-900 dark:text-gray-100 mt-0.5 break-all">{value}</p>
-                        )}
+                      <div
+                        key={key}
+                        className="flex flex-col rounded-lg border border-gray-100 bg-gray-50 p-3 dark:border-gray-700 dark:bg-gray-800"
+                      >
+                        <span className="text-xs font-medium uppercase tracking-wide text-gray-500 dark:text-gray-400">
+                          {label}
+                        </span>
+                        <span className="mt-0.5 break-words text-sm text-gray-900 dark:text-gray-100">
+                          {value}
+                        </span>
                       </div>
                     );
                   })}

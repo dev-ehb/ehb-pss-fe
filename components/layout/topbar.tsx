@@ -66,7 +66,7 @@ export function Topbar() {
         </button>
         <div className="min-w-0">
           <h1 className="truncate text-lg font-semibold text-gray-900 dark:text-gray-100">{getPageTitle(pathname)}</h1>
-          <p className="truncate text-xs text-gray-500 dark:text-gray-400">PSS Platform Support Services</p>
+          <p className="truncate text-xs text-gray-500 dark:text-gray-400">PSS Personal Security Services</p>
         </div>
       </div>
 

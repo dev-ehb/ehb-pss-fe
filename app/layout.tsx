@@ -9,7 +9,7 @@ import { ThemeProvider } from '@/components/theme/ThemeProvider';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'PSS Admin — EHB Platform Support Services',
+  title: 'PSS Admin — EHB Personal Security Services',
   description: 'PSS Admin Dashboard — SQ verification engine control panel',
 };
 

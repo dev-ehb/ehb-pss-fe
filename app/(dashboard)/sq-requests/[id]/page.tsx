@@ -11,6 +11,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
 import { ErrorState } from '@/components/ui/error-state';
+import { RefreshButton } from '@/components/ui/refresh-button';
 import { Progress } from '@/components/ui/progress';
 import { Separator } from '@/components/ui/separator';
 import { cn, formatDate, flattenObject } from '@/lib/utils';
@@ -117,8 +118,25 @@ export default function SqRequestDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
 
-  const { data: request, isLoading, isError, refetch } = useGetRequestByIdQuery(id ?? '');
-  const { data: auditLogs, isLoading: auditLoading } = useGetLogsByRequestQuery(id ?? '');
+  const {
+    data: request,
+    isLoading,
+    isError,
+    refetch,
+    isFetching,
+  } = useGetRequestByIdQuery(id ?? '');
+  const {
+    data: auditLogs,
+    isLoading: auditLoading,
+    refetch: refetchAudit,
+    isFetching: auditFetching,
+  } = useGetLogsByRequestQuery(id ?? '');
+
+  // Page-level refresh: pull both the request and its audit trail fresh.
+  const handleRefresh = () => {
+    refetch();
+    refetchAudit();
+  };
 
   if (isLoading) {
     return (
@@ -189,6 +207,11 @@ export default function SqRequestDetailPage() {
               Back
             </Button>
             <div className="flex flex-wrap items-center gap-2">
+              <RefreshButton
+                onClick={handleRefresh}
+                busy={isFetching || auditFetching}
+                title="Refresh request"
+              />
               <SqStatusPill status={request.status} />
               <SqBadge level={sqLevel} size="lg" />
             </div>

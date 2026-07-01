@@ -86,7 +86,7 @@ export default function LoginPage() {
             <Shield className="h-8 w-8" />
           </div>
           <h1 className="text-3xl font-bold text-gray-900 dark:text-gray-100">PSS Admin</h1>
-          <p className="text-gray-500 dark:text-gray-400 mt-1">EHB Platform Support Services</p>
+          <p className="text-gray-500 dark:text-gray-400 mt-1">EHB Personal Security Services</p>
         </div>
 
         <Card className="shadow-lg">
@@ -152,7 +152,7 @@ export default function LoginPage() {
         </Card>
 
         <p className="text-center text-xs text-gray-400 dark:text-gray-500 mt-6">
-          EHB Platform Support Services · Admin Dashboard
+          EHB Personal Security Services · Admin Dashboard
         </p>
       </div>
     </div>
